@@ -11,13 +11,9 @@
             padding: 30px;
         }
 
-        h1 {
-            color: #111827;
-        }
+        h1 { color: #111827; }
 
-        form {
-            margin-bottom: 30px;
-        }
+        form { margin-bottom: 30px; }
 
         input {
             padding: 10px;
@@ -35,9 +31,7 @@
             cursor: pointer;
         }
 
-        button:hover {
-            background: #4338ca;
-        }
+        button:hover { background: #4338ca; }
 
         table {
             width: 100%;
@@ -61,28 +55,20 @@
             border-bottom: 1px solid #eee;
         }
 
-        tr:hover {
-            background: #f3f4f6;
+        tr:hover { background: #f3f4f6; }
+
+        .rating-high { color: #16a34a; font-weight: bold; }
+        .rating-mid { color: #f59e0b; font-weight: bold; }
+        .rating-low { color: #ef4444; font-weight: bold; }
+
+        .section-title {
+            margin-top: 40px;
+            margin-bottom: 10px;
+            font-size: 20px;
+            font-weight: 600;
         }
 
-        .score-high {
-            color: #16a34a;
-            font-weight: bold;
-        }
-
-        .score-mid {
-            color: #f59e0b;
-            font-weight: bold;
-        }
-
-        .score-low {
-            color: #ef4444;
-            font-weight: bold;
-        }
-
-        .links {
-            margin-top: 20px;
-        }
+        .links { margin-top: 20px; }
 
         .links a {
             margin-right: 20px;
@@ -90,15 +76,15 @@
             text-decoration: none;
         }
 
-        .links a:hover {
-            text-decoration: underline;
-        }
+        .links a:hover { text-decoration: underline; }
 
-        .section-title {
-            margin-top: 40px;
-            margin-bottom: 10px;
-            font-size: 20px;
-            font-weight: 600;
+        .no-data {
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            text-align: center;
+            color: #6b7280;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
     </style>
 </head>
@@ -107,65 +93,59 @@
 <h1>TARS AI Sales Dashboard</h1>
 
 <form action="/search" method="POST">
-    <input type="text" name="keyword" placeholder="Search keyword" required>
-    <input type="text" name="city" placeholder="City (e.g. Mumbai)" required>
+    <input type="text" name="keyword" placeholder="Search keyword (e.g. Software)" required>
+    <input type="text" name="city" placeholder="City (e.g. Pune)" required>
     <button type="submit">Search</button>
 </form>
 
-<div class="section-title">Leads</div>
+<div class="section-title">Company Results</div>
 
+{% if companies %}
 <table>
 <tr>
-<th>Company</th>
-<th>Location</th>
-<th>Score</th>
-<th>Emails</th>
-<th>Phones</th>
+<th>Company Name</th>
 <th>Website</th>
+<th>Phone</th>
+<th>Address</th>
+<th>Rating</th>
 </tr>
 
 {% for c in companies %}
 <tr>
 <td>{{ c.name }}</td>
-<td>{{ c.location }}</td>
 
 <td>
-{% if c.score >= 50 %}
-<span class="score-high">{{ c.score }}</span>
-{% elif c.score >= 20 %}
-<span class="score-mid">{{ c.score }}</span>
-{% else %}
-<span class="score-low">{{ c.score }}</span>
-{% endif %}
+    {% if c.website %}
+        <a href="{{ c.website }}" target="_blank">Visit Website</a>
+    {% else %}
+        N/A
+    {% endif %}
 </td>
 
-<td>{{ c.emails|length }}</td>
-<td>{{ c.phones|length }}</td>
-<td><a href="{{ c.url }}" target="_blank">Visit</a></td>
+<td>{{ c.phone or "N/A" }}</td>
+<td>{{ c.address or "N/A" }}</td>
+
+<td>
+    {% if c.rating and c.rating|float >= 4 %}
+        <span class="rating-high">{{ c.rating }}</span>
+    {% elif c.rating and c.rating|float >= 2 %}
+        <span class="rating-mid">{{ c.rating }}</span>
+    {% else %}
+        <span class="rating-low">{{ c.rating or "N/A" }}</span>
+    {% endif %}
+</td>
+
 </tr>
 {% endfor %}
 </table>
 
-<div class="section-title">Search History</div>
-
-<table>
-<tr>
-<th>Keyword</th>
-<th>City</th>
-<th>Time</th>
-</tr>
-
-{% for h in history %}
-<tr>
-<td>{{ h[0] }}</td>
-<td>{{ h[1] }}</td>
-<td>{{ h[2] }}</td>
-</tr>
-{% endfor %}
-</table>
+{% else %}
+<div class="no-data">
+    No data available. Please search for a company and city.
+</div>
+{% endif %}
 
 <div class="links">
-<a href="/export">Export CSV</a>
 <a href="/logout">Logout</a>
 </div>
 
