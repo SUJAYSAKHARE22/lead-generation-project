@@ -1,22 +1,73 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>TARS Login</title>
-<style>
-body{background:#0f172a;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;}
-.card{background:#1e293b;padding:40px;border-radius:10px;color:white;width:300px;}
-input{width:100%;padding:10px;margin:10px 0;border-radius:5px;border:none;}
-button{width:100%;padding:10px;background:#3b82f6;border:none;color:white;border-radius:5px;}
-</style>
+    <title>TARS Login</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            font-family: Inter, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-box {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 40px;
+            width: 320px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            color: white;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            background: #6366f1;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: 600;
+            opacity: 0.8;
+        }
+    </style>
 </head>
 <body>
-<div class="card">
-<h2>AI Sales Login</h2>
-<form method="POST">
-<input name="username" placeholder="Username">
-<input name="password" type="password" placeholder="Password">
-<button>Login</button>
-</form>
+
+<div class="login-box">
+    <div class="brand">TARS Intelligence</div>
+    <h2>Login</h2>
+    <form method="POST">
+        <input name="username" placeholder="Username" required>
+        <input name="password" type="password" placeholder="Password" required>
+        <button>Enter Dashboard</button>
+    </form>
 </div>
+
 </body>
 </html>
