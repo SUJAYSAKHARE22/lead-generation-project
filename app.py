@@ -8,7 +8,7 @@ from openpyxl import Workbook
 app = Flask(__name__)
 app.secret_key = "tars_stable_system"
 
-SERP_API_KEY = "e75cce2d188b6856848e80b7599caf9427224447b87004b883999dcde7ee96e3"
+SERP_API_KEY = "99fea23743725c92605a7f50da0558aeda96bfada39db705bbf4e1668bffd56d"
 
 # ===============================
 # DATABASE INIT (UPGRADED)
