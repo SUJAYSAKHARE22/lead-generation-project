@@ -1,41 +1,42 @@
 import sqlite3
-import os
-from flask import Flask, render_template, request, redirect, session, Response
 import requests
-from bs4 import BeautifulSoup
 import re
+from bs4 import BeautifulSoup
+from flask import Flask, render_template, request, redirect, session, Response
+from openpyxl import Workbook
 
 app = Flask(__name__)
 app.secret_key = "tars_stable_system"
 
-SERP_API_KEY = "e75cce2d188b6856848e80b7599caf9427224447b87004b883999dcde7ee96e3"
+SERP_API_KEY = "99fea23743725c92605a7f50da0558aeda96bfada39db705bbf4e1668bffd56d"
 
 # ===============================
-# DATABASE SETUP (AUTO FIX MODE)
+# DATABASE INIT (UPGRADED)
 # ===============================
-
 def init_db():
     conn = sqlite3.connect("leads.db")
-    cursor = conn.cursor()
+    cur = conn.cursor()
 
-    cursor.execute("""
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS companies (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE,
-        url TEXT,
-        location TEXT,
-        score INTEGER,
-        emails TEXT,
-        phones TEXT
+        name TEXT,
+        website TEXT,
+        phone TEXT,
+        address TEXT,
+        rating TEXT
     )
     """)
 
-    # Check if description column exists
-    cursor.execute("PRAGMA table_info(companies)")
-    columns = [col[1] for col in cursor.fetchall()]
-
-    if "description" not in columns:
-        cursor.execute("ALTER TABLE companies ADD COLUMN description TEXT")
+    # NEW columns added safely
+    for col in [
+        "description", "email", "ceo",
+        "company_linkedin", "leadership_linkedin"
+    ]:
+        try:
+            cur.execute(f"ALTER TABLE companies ADD COLUMN {col} TEXT")
+        except:
+            pass
 
     conn.commit()
     conn.close()
@@ -43,209 +44,226 @@ def init_db():
 init_db()
 
 # ===============================
-# SIMPLE SCORING SYSTEM
+# WEBSITE SCRAPER
 # ===============================
+def extract_website_data(url):
+    try:
+        html = requests.get(url, timeout=5).text
+        soup = BeautifulSoup(html, "html.parser")
 
-keywords = [
-    "software", "it services", "digital",
-    "automation", "technology", "consulting",
-    "development", "enterprise"
-]
+        emails = re.findall(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+", html)
+        email = emails[0] if emails else ""
 
-def calculate_score(text):
-    score = 0
-    text = text.lower()
-    for word in keywords:
-        if word in text:
-            score += 12
-    return min(score, 100)
+        desc = ""
+        meta = soup.find("meta", attrs={"name": "description"})
+        if meta:
+            desc = meta.get("content", "")
+        elif soup.title:
+            desc = soup.title.text.strip()
+
+        return email, desc
+    except:
+        return "", ""
 
 # ===============================
-# GOOGLE SEARCH
+# CEO LINKEDIN
 # ===============================
+def find_ceo_with_linkedin(company_name):
+    try:
+        query = f"{company_name} CEO LinkedIn"
 
-def search_google(query):
+        params = {"q": query, "engine": "google", "api_key": SERP_API_KEY}
+        data = requests.get("https://serpapi.com/search", params=params).json()
+
+        for result in data.get("organic_results", []):
+            link = result.get("link", "")
+            title = result.get("title", "")
+
+            if "linkedin.com/in/" in link:
+                name = title.split("-")[0].strip()
+                return name, link
+
+        return "Not Available", ""
+    except:
+        return "Not Available", ""
+
+# ===============================
+# COMPANY + HR LINKEDIN (NEW)
+# ===============================
+def find_company_and_hr_linkedin(company_name):
+    try:
+        query = f"{company_name} company LinkedIn"
+        params = {"q": query, "engine": "google", "api_key": SERP_API_KEY}
+        data = requests.get("https://serpapi.com/search", params=params).json()
+
+        company_linkedin = ""
+        leadership_linkedin = ""
+
+        for result in data.get("organic_results", []):
+            link = result.get("link", "")
+
+            if "linkedin.com/company/" in link and not company_linkedin:
+                company_linkedin = link
+
+            if "linkedin.com/in/" in link and not leadership_linkedin:
+                leadership_linkedin = link
+
+        return company_linkedin, leadership_linkedin
+    except:
+        return "", ""
+
+# ===============================
+# GOOGLE MAPS SEARCH
+# ===============================
+def search_companies_maps(keyword, city):
     params = {
-        "engine": "google",
-        "q": query,
+        "engine": "google_maps",
+        "q": f"{keyword} company in {city}",
         "api_key": SERP_API_KEY
     }
 
-    response = requests.get("https://serpapi.com/search", params=params)
-    data = response.json()
-
-    links = []
-    for result in data.get("organic_results", []):
-        if result.get("link"):
-            links.append(result["link"])
-
-    return links[:12]
-
-# ===============================
-# SCRAPER
-# ===============================
-
-def extract_emails(text):
-    return list(set(re.findall(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", text)))
-
-def extract_phones(text):
-    return list(set(re.findall(r"\+?\d[\d -]{8,}\d", text)))
-
-def detect_city(text):
-    cities = ["nagpur", "mumbai", "pune", "delhi", "bangalore", "hyderabad"]
-    text = text.lower()
-    for city in cities:
-        if city in text:
-            return city.title()
-    return "Not Mentioned"
-
-def scrape_website(url):
-    try:
-        response = requests.get(url, timeout=5)
-        soup = BeautifulSoup(response.text, "html.parser")
-        text = soup.get_text()
-
-        return {
-            "name": url.replace("https://", "").replace("http://", "").split("/")[0],
-            "url": url,
-            "location": detect_city(text),
-            "description": text[:500].replace("\n", " "),
-            "score": calculate_score(text),
-            "emails": extract_emails(text),
-            "phones": extract_phones(text)
-        }
-
-    except:
-        return None
-
-# ===============================
-# DATABASE OPERATIONS
-# ===============================
-
-def save_company(company):
-    conn = sqlite3.connect("leads.db")
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    INSERT OR REPLACE INTO companies
-    (name, url, location, score, emails, phones, description)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (
-        company["name"],
-        company["url"],
-        company["location"],
-        company["score"],
-        ",".join(company["emails"]),
-        ",".join(company["phones"]),
-        company["description"]
-    ))
-
-    conn.commit()
-    conn.close()
-
-def get_companies():
-    conn = sqlite3.connect("leads.db")
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    SELECT name, url, location, score, emails, phones, description
-    FROM companies
-    ORDER BY score DESC
-    """)
-
-    rows = cursor.fetchall()
-    conn.close()
-
+    data = requests.get("https://serpapi.com/search", params=params).json()
     companies = []
-    for row in rows:
+
+    for r in data.get("local_results", []):
+        name = r.get("title")
+        website = r.get("website")
+        phone = r.get("phone", "")
+        address = r.get("address", "")
+        rating = r.get("rating", "")
+        description = r.get("description", "")
+
+        email = ""
+        ceo = "Not Available"
+
+        if website:
+            if not website.startswith("http"):
+                website = "https://" + website
+            email, desc2 = extract_website_data(website)
+            if not description:
+                description = desc2
+
+        # CEO enrichment
+        ceo_name, ceo_link = find_ceo_with_linkedin(name)
+        if ceo_link:
+            ceo = f"{ceo_name}|{ceo_link}"
+
+        # NEW LinkedIn enrichment
+        company_ln, hr_ln = find_company_and_hr_linkedin(name)
+
         companies.append({
-            "name": row[0],
-            "url": row[1],
-            "location": row[2],
-            "score": row[3],
-            "emails": row[4].split(",") if row[4] else [],
-            "phones": row[5].split(",") if row[5] else [],
-            "description": row[6] if row[6] else ""
+            "name": name,
+            "website": website,
+            "phone": phone,
+            "address": address,
+            "rating": rating,
+            "description": description,
+            "email": email,
+            "ceo": ceo,
+            "company_linkedin": company_ln,
+            "leadership_linkedin": hr_ln
         })
 
     return companies
 
 # ===============================
-# ROUTES
+# DB OPS
 # ===============================
+def clear_companies():
+    conn = sqlite3.connect("leads.db")
+    conn.execute("DELETE FROM companies")
+    conn.commit()
+    conn.close()
 
+def save_company(c):
+    conn = sqlite3.connect("leads.db")
+    conn.execute("""
+    INSERT INTO companies
+    (name, website, phone, address, rating, description, email, ceo, company_linkedin, leadership_linkedin)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        c["name"], c["website"], c["phone"], c["address"],
+        c["rating"], c["description"], c["email"], c["ceo"],
+        c["company_linkedin"], c["leadership_linkedin"]
+    ))
+    conn.commit()
+    conn.close()
+
+def get_companies():
+    conn = sqlite3.connect("leads.db")
+    rows = conn.execute("""
+    SELECT name, website, phone, address, rating, description, email, ceo, company_linkedin, leadership_linkedin
+    FROM companies
+    """).fetchall()
+    conn.close()
+
+    return [{
+        "name": r[0],
+        "website": r[1],
+        "phone": r[2],
+        "address": r[3],
+        "rating": r[4],
+        "description": r[5],
+        "email": r[6],
+        "ceo": r[7],
+        "company_linkedin": r[8],
+        "leadership_linkedin": r[9]
+    } for r in rows]
+
+# ===============================
+# ROUTES (UNCHANGED)
+# ===============================
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         if request.form["username"] == "admin" and request.form["password"] == "tars123":
             session["user"] = "admin"
             return redirect("/dashboard")
-        else:
-            return "Invalid Credentials"
+        return "Invalid Credentials"
     return render_template("login.html")
 
 @app.route("/dashboard")
 def dashboard():
     if "user" not in session:
         return redirect("/")
-
-    companies = get_companies()
-
-    hot = sum(1 for c in companies if c["score"] >= 60)
-    warm = sum(1 for c in companies if 30 <= c["score"] < 60)
-    cold = sum(1 for c in companies if c["score"] < 30)
-
-    return render_template("dashboard.html",
-                           companies=companies,
-                           hot=hot,
-                           warm=warm,
-                           cold=cold)
+    return render_template("dashboard.html", companies=get_companies())
 
 @app.route("/search", methods=["POST"])
 def search():
-    if "user" not in session:
-        return redirect("/")
-
-    keyword = request.form["keyword"]
-    city = request.form["city"]
-
-    query = f"{keyword} company services in {city}"
-
-    conn = sqlite3.connect("leads.db")
-    conn.execute("DELETE FROM companies")
-    conn.commit()
-    conn.close()
-
-    links = search_google(query)
-
-    for link in links:
-        data = scrape_website(link)
-        if data:
-            save_company(data)
-
+    clear_companies()
+    companies = search_companies_maps(
+        request.form["keyword"],
+        request.form["city"]
+    )
+    for c in companies:
+        save_company(c)
     return redirect("/dashboard")
 
-@app.route("/export")
-def export():
-    if "user" not in session:
-        return redirect("/")
-
+@app.route("/export_excel")
+def export_excel():
     companies = get_companies()
+    wb = Workbook()
+    ws = wb.active
 
-    def generate():
-        yield "Company,Website,Location,Score,Emails,Phones,Description\n"
-        for c in companies:
-            yield f"{c['name']},{c['url']},{c['location']},{c['score']}," \
-                  f"{'|'.join(c['emails'])},{'|'.join(c['phones'])}," \
-                  f"\"{c['description']}\"\n"
+    ws.append([
+        "Company","Website","Phone","Address","Rating",
+        "Description","Email","CEO","Company LinkedIn","Leadership LinkedIn"
+    ])
 
-    return Response(generate(),
-                    mimetype="text/csv",
-                    headers={"Content-Disposition": "attachment;filename=tars_leads.csv"})
+    for c in companies:
+        ws.append(list(c.values()))
+
+    path = "company_leads.xlsx"
+    wb.save(path)
+
+    return Response(open(path, "rb"),
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment;filename=company_leads.xlsx"})
 
 @app.route("/logout")
 def logout():
     session.clear()
+    clear_companies()
     return redirect("/")
 
 if __name__ == "__main__":

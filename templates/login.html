@@ -1,22 +1,147 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>TARS Login</title>
-<style>
-body{background:#0f172a;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;}
-.card{background:#1e293b;padding:40px;border-radius:10px;color:white;width:300px;}
-input{width:100%;padding:10px;margin:10px 0;border-radius:5px;border:none;}
-button{width:100%;padding:10px;background:#3b82f6;border:none;color:white;border-radius:5px;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | TARS LeadVerse</title>
+    <style>
+        * { box-sizing: border-box; }
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        /* Video Background Container */
+        .video-bg {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            filter: brightness(0.6); /* Makes text easier to read */
+            object-fit: cover;
+        }
+
+        /* Main Container with Glassmorphism */
+        .container {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 100%);
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 50px 40px;
+            border-radius: 24px;
+            width: 400px;
+            text-align: center;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            color: white;
+        }
+
+        /* The New Big Heading */
+        .main-brand {
+            font-size: 14px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #818cf8;
+            font-weight: 800;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .sub-text {
+            color: #cbd5e1;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        /* Styled Inputs */
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input::placeholder { color: #94a3b8; }
+
+        input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #818cf8;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: #6366f1;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        button:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+        }
+
+        .footer-link {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+    </style>
 </head>
 <body>
-<div class="card">
-<h2>AI Sales Login</h2>
-<form method="POST">
-<input name="username" placeholder="Username">
-<input name="password" type="password" placeholder="Password">
-<button>Login</button>
-</form>
-</div>
+
+    <video autoplay muted loop playsinline class="video-bg">
+        <source src=""C:\Users\Kartik\Desktop\leaddvideo.mp4"" type="video/mp4">
+    </video>
+
+    <div class="container">
+        <div class="login-card">
+            <span class="main-brand">TARS Technologies</span>
+            <h1>LeadVerse</h1>
+            <p class="sub-text">Next-Gen AI Intelligence Platform</p>
+
+            <form method="POST">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit">Access Dashboard</button>
+            </form>
+
+            <div class="footer-link">
+                Secure Encrypted Access
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
