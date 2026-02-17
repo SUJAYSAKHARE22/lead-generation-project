@@ -2,16 +2,15 @@ import sqlite3
 import requests
 import re
 from bs4 import BeautifulSoup
-from flask import Flask, render_template, request, redirect, session, Response
-from openpyxl import Workbook
+from flask import Flask, render_template, request, redirect, session, jsonify
 
 app = Flask(__name__)
 app.secret_key = "tars_stable_system"
 
-SERP_API_KEY = "99fea23743725c92605a7f50da0558aeda96bfada39db705bbf4e1668bffd56d"
+SERP_API_KEY = "7f982fb0183ac223daf3a7c19b4c6f4465db88af"
 
 # ===============================
-# DATABASE INIT (UPGRADED)
+# DATABASE INIT
 # ===============================
 def init_db():
     conn = sqlite3.connect("leads.db")
@@ -24,19 +23,14 @@ def init_db():
         website TEXT,
         phone TEXT,
         address TEXT,
-        rating TEXT
+        rating TEXT,
+        description TEXT,
+        email TEXT,
+        ceo TEXT,
+        company_linkedin TEXT,
+        leadership_linkedin TEXT
     )
     """)
-
-    # NEW columns added safely
-    for col in [
-        "description", "email", "ceo",
-        "company_linkedin", "leadership_linkedin"
-    ]:
-        try:
-            cur.execute(f"ALTER TABLE companies ADD COLUMN {col} TEXT")
-        except:
-            pass
 
     conn.commit()
     conn.close()
@@ -70,12 +64,23 @@ def extract_website_data(url):
 # ===============================
 def find_ceo_with_linkedin(company_name):
     try:
-        query = f"{company_name} CEO LinkedIn"
+        url = "https://google.serper.dev/search"
 
-        params = {"q": query, "engine": "google", "api_key": SERP_API_KEY}
-        data = requests.get("https://serpapi.com/search", params=params).json()
+        payload = {
+            "q": f"{company_name} CEO site:linkedin.com/in",
+            "gl": "in",
+            "hl": "en"
+        }
 
-        for result in data.get("organic_results", []):
+        headers = {
+            "X-API-KEY": SERP_API_KEY,
+            "Content-Type": "application/json"
+        }
+
+        response = requests.post(url, json=payload, headers=headers)
+        data = response.json()
+
+        for result in data.get("organic", []):
             link = result.get("link", "")
             title = result.get("title", "")
 
@@ -84,134 +89,87 @@ def find_ceo_with_linkedin(company_name):
                 return name, link
 
         return "Not Available", ""
+
     except:
         return "Not Available", ""
 
+
 # ===============================
-# COMPANY + HR LINKEDIN (NEW)
+# COMPANY LINKEDIN
 # ===============================
 def find_company_and_hr_linkedin(company_name):
     try:
-        query = f"{company_name} company LinkedIn"
-        params = {"q": query, "engine": "google", "api_key": SERP_API_KEY}
-        data = requests.get("https://serpapi.com/search", params=params).json()
+        url = "https://google.serper.dev/search"
 
-        company_linkedin = ""
-        leadership_linkedin = ""
+        payload = {
+            "q": f"{company_name} site:linkedin.com/company",
+            "gl": "in",
+            "hl": "en"
+        }
 
-        for result in data.get("organic_results", []):
+        headers = {
+            "X-API-KEY": SERP_API_KEY,
+            "Content-Type": "application/json"
+        }
+
+        response = requests.post(url, json=payload, headers=headers)
+        data = response.json()
+
+        for result in data.get("organic", []):
             link = result.get("link", "")
 
-            if "linkedin.com/company/" in link and not company_linkedin:
-                company_linkedin = link
+            if "linkedin.com/company/" in link:
+                return link, ""
 
-            if "linkedin.com/in/" in link and not leadership_linkedin:
-                leadership_linkedin = link
+        return "", ""
 
-        return company_linkedin, leadership_linkedin
     except:
         return "", ""
 
-# ===============================
-# GOOGLE MAPS SEARCH
-# ===============================
-def search_companies_maps(keyword, city):
-    params = {
-        "engine": "google_maps",
-        "q": f"{keyword} company in {city}",
-        "api_key": SERP_API_KEY
-    }
-
-    data = requests.get("https://serpapi.com/search", params=params).json()
-    companies = []
-
-    for r in data.get("local_results", []):
-        name = r.get("title")
-        website = r.get("website")
-        phone = r.get("phone", "")
-        address = r.get("address", "")
-        rating = r.get("rating", "")
-        description = r.get("description", "")
-
-        email = ""
-        ceo = "Not Available"
-
-        if website:
-            if not website.startswith("http"):
-                website = "https://" + website
-            email, desc2 = extract_website_data(website)
-            if not description:
-                description = desc2
-
-        # CEO enrichment
-        ceo_name, ceo_link = find_ceo_with_linkedin(name)
-        if ceo_link:
-            ceo = f"{ceo_name}|{ceo_link}"
-
-        # NEW LinkedIn enrichment
-        company_ln, hr_ln = find_company_and_hr_linkedin(name)
-
-        companies.append({
-            "name": name,
-            "website": website,
-            "phone": phone,
-            "address": address,
-            "rating": rating,
-            "description": description,
-            "email": email,
-            "ceo": ceo,
-            "company_linkedin": company_ln,
-            "leadership_linkedin": hr_ln
-        })
-
-    return companies
 
 # ===============================
-# DB OPS
+# PRODUCT KEYWORD EXTRACTION
 # ===============================
-def clear_companies():
-    conn = sqlite3.connect("leads.db")
-    conn.execute("DELETE FROM companies")
-    conn.commit()
-    conn.close()
+def extract_product_keywords(user_message):
+    text = user_message.lower()
+    important_words = [
+        "healthcare", "hospital", "erp",
+        "automation", "document", "saas",
+        "software", "enterprise"
+    ]
 
-def save_company(c):
-    conn = sqlite3.connect("leads.db")
-    conn.execute("""
-    INSERT INTO companies
-    (name, website, phone, address, rating, description, email, ceo, company_linkedin, leadership_linkedin)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        c["name"], c["website"], c["phone"], c["address"],
-        c["rating"], c["description"], c["email"], c["ceo"],
-        c["company_linkedin"], c["leadership_linkedin"]
-    ))
-    conn.commit()
-    conn.close()
-
-def get_companies():
-    conn = sqlite3.connect("leads.db")
-    rows = conn.execute("""
-    SELECT name, website, phone, address, rating, description, email, ceo, company_linkedin, leadership_linkedin
-    FROM companies
-    """).fetchall()
-    conn.close()
-
-    return [{
-        "name": r[0],
-        "website": r[1],
-        "phone": r[2],
-        "address": r[3],
-        "rating": r[4],
-        "description": r[5],
-        "email": r[6],
-        "ceo": r[7],
-        "company_linkedin": r[8],
-        "leadership_linkedin": r[9]
-    } for r in rows]
+    return [word for word in important_words if word in text]
 
 # ===============================
-# ROUTES (UNCHANGED)
+# COMPANY SCORING
+# ===============================
+def calculate_fit_score(product_keywords, company):
+    score = 0
+    reasons = []
+
+    company_text = (company["description"] or "").lower()
+
+    for keyword in product_keywords:
+        if keyword in company_text:
+            score += 2
+            reasons.append(f"Matches '{keyword}' domain")
+
+    if "healthcare" in company_text:
+        score += 2
+        reasons.append("Works in healthcare domain")
+
+    if "erp" in company_text:
+        score += 2
+        reasons.append("Provides ERP solutions")
+
+    if "automation" in company_text:
+        score += 2
+        reasons.append("Provides automation services")
+
+    return score, reasons
+
+# ===============================
+# ROUTES
 # ===============================
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -226,44 +184,144 @@ def login():
 def dashboard():
     if "user" not in session:
         return redirect("/")
-    return render_template("dashboard.html", companies=get_companies())
+    return render_template("dashboard.html")
 
-@app.route("/search", methods=["POST"])
-def search():
-    clear_companies()
-    companies = search_companies_maps(
-        request.form["keyword"],
-        request.form["city"]
-    )
-    for c in companies:
-        save_company(c)
-    return redirect("/dashboard")
+# ===============================
+# CHATBOT ROUTE
+# ===============================
+@app.route("/chat", methods=["POST"])
+def chat():
 
-@app.route("/export_excel")
-def export_excel():
-    companies = get_companies()
-    wb = Workbook()
-    ws = wb.active
+    if "user" not in session:
+        return jsonify({"response": "Please login first."})
 
-    ws.append([
-        "Company","Website","Phone","Address","Rating",
-        "Description","Email","CEO","Company LinkedIn","Leadership LinkedIn"
-    ])
+    data = request.get_json()
+    user_message = data.get("message")
 
-    for c in companies:
-        ws.append(list(c.values()))
+    # Detect city
+    city_match = re.search(r"in ([A-Za-z ]+)", user_message)
+    city = city_match.group(1) if city_match else "India"
 
-    path = "company_leads.xlsx"
-    wb.save(path)
+    product_keywords = extract_product_keywords(user_message)
 
-    return Response(open(path, "rb"),
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": "attachment;filename=company_leads.xlsx"})
+    search_queries = [
+        "IT company",
+        "software company",
+        "healthcare software company",
+        "ERP company",
+        "hospital management software company"
+    ]
+
+    all_companies = []
+
+    # SEARCH
+    for query in search_queries:
+
+     url = "https://google.serper.dev/maps"
+
+    payload = {
+        "q": f"{query} in {city}",
+        "gl": "in",
+        "hl": "en"
+    }
+
+    headers = {
+        "X-API-KEY": SERP_API_KEY,
+        "Content-Type": "application/json"
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+    data = response.json()
+
+    results = data.get("places", [])
+
+    for r in results:
+
+        name = r.get("title")
+        website = r.get("website")
+        phone = r.get("phoneNumber", "")
+        address = r.get("address", "")
+        rating = r.get("rating", "")
+        description = r.get("description", "")
+
+        email = ""
+        ceo = "Not Available"
+
+        if website:
+            if not website.startswith("http"):
+                website = "https://" + website
+
+            email, desc2 = extract_website_data(website)
+
+            if not description:
+                description = desc2
+
+        # CEO enrichment
+        ceo_name, ceo_link = find_ceo_with_linkedin(name)
+        if ceo_link:
+            ceo = f"{ceo_name}|{ceo_link}"
+
+        # LinkedIn enrichment
+        company_ln, hr_ln = find_company_and_hr_linkedin(name)
+
+        all_companies.append({
+            "name": name,
+            "website": website,
+            "phone": phone,
+            "address": address,
+            "rating": rating,
+            "description": description,
+            "email": email,
+            "ceo": ceo,
+            "company_linkedin": company_ln,
+            "leadership_linkedin": hr_ln
+        })
+
+
+    # Remove duplicates
+    unique_companies = {c["name"]: c for c in all_companies}.values()
+
+    if not unique_companies:
+        return jsonify({"response": "❌ No companies found. Check API key or city."})
+
+    # SCORE
+    scored = []
+    for company in unique_companies:
+        score, reasons = calculate_fit_score(product_keywords, company)
+        scored.append((score, reasons, company))
+
+    scored.sort(reverse=True, key=lambda x: x[0])
+
+    # RESPONSE
+    response = "<b>🎯 Best Companies To Pitch (Ranked)</b><br><br>"
+
+    for score, reasons, c in scored[:5]:
+
+        ceo_name = c["ceo"].split("|")[0] if "|" in c["ceo"] else c["ceo"]
+        ceo_link = c["ceo"].split("|")[1] if "|" in c["ceo"] else ""
+
+        reason_text = "<br>".join([f"✔ {r}" for r in reasons]) if reasons else "General IT company"
+
+        response += f"""
+        <b>{c['name']}</b><br>
+        ⭐ Fit Score: {score}<br>
+        Why Suitable:<br>
+        {reason_text}<br><br>
+        📍 {c['address']}<br>
+        🌐 <a href="{c['website']}" target="_blank">Website</a><br>
+        👤 CEO: {ceo_name}<br>
+        🔗 CEO LinkedIn: <a href="{ceo_link}" target="_blank">{ceo_link}</a><br>
+        🏢 Company LinkedIn: <a href="{c['company_linkedin']}" target="_blank">{c['company_linkedin']}</a><br>
+        📧 Email: {c['email']}<br>
+        ⭐ Google Rating: {c['rating']}<br>
+        <hr>
+        """
+
+    return jsonify({"response": response})
 
 @app.route("/logout")
 def logout():
     session.clear()
-    clear_companies()
     return redirect("/")
 
 if __name__ == "__main__":
