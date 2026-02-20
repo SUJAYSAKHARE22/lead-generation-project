@@ -95,23 +95,42 @@ a{color:#2563eb;text-decoration:none;}
 <body>
 
 <!-- SIDEBAR -->
+<!-- SIDEBAR -->
 <div class="sidebar">
 <h2>TARS Tech</h2>
 <a href="#">Dashboard</a>
+<a href="/savedprojects">Viewed saved projects</a>
+<a href="/chat">Return to Chat</a>
+<a href="/industry_viewed" style="background: #3730a3; margin-top: 10px;">Industry Viewed</a> 
+<hr style="border: 0.5px solid #334155; margin: 20px 0;">
 <a href="/export_excel">Export Leads</a>
 <a href="/logout">Logout</a>
-</div>
-
+  </div>
 <!-- MAIN -->
 <div class="main">
 
 <div class="top">
 <h2>LeadVerse AI</h2>
 
-<form method="POST" action="/search" class="search">
-<input name="keyword" placeholder="Search..." required>
-<input name="city" placeholder="City">
-<button>Search</button>
+<form action="/run_targeting" method="POST" class="search-box">
+
+<label>Select Industries:</label><br>
+
+<select name="industry[]" multiple style="width:260px;height:120px;">
+{% for ind in suggested_industry %}
+<option value="{{ ind }}" selected>{{ ind }}</option>
+{% endfor %}
+</select>
+
+<br><br>
+
+<input name="city"
+       placeholder="Enter Target City (e.g. Mumbai, London, Dubai)"
+       value="{{ city }}"
+       required>
+
+<button type="submit">Search</button>
+
 </form>
 
 <div class="profile">K</div>

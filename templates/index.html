@@ -5,81 +5,165 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Poppins;}
-body{display:flex;background:#f4f6f9;}
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Poppins;
+}
 
-/* Sidebar */
+/* PAGE LAYOUT */
+body{
+display:flex;
+background:#f4f6f9;
+}
+
+/* LEFT SIDEBAR (FIXED NAV) */
 .sidebar{
-width:220px;height:100vh;background:#111827;color:white;padding:20px;
-}
-.sidebar h2{margin-bottom:30px;}
-.sidebar a{display:block;color:#cbd5e1;text-decoration:none;margin:15px 0;}
-.sidebar a:hover{color:white;}
-
-/* Main */
-.main{flex:1;padding:30px;}
-
-.top-bar{
-display:flex;justify-content:space-between;margin-bottom:25px;
+width:240px;
+height:100vh;
+background:#0f172a;
+color:white;
+padding:25px;
+position:fixed;
+left:0;
+top:0;
 }
 
-.search-box input{
-padding:10px;border-radius:6px;border:1px solid #ccc;margin-right:5px;
-}
-.search-box button{
-padding:10px 15px;background:#4f46e5;color:white;border:none;border-radius:6px;
+/* Sidebar Title */
+.sidebar h1{
+margin-bottom:30px;
+font-size:22px;
 }
 
-/* KPI */
-.cards{display:flex;gap:20px;margin-bottom:25px;}
+/* Sidebar Links */
+.sidebar a{
+display:block;
+color:#cbd5e1;
+text-decoration:none;
+margin:12px 0;
+padding:10px;
+border-radius:6px;
+transition:0.2s;
+}
+
+.sidebar a:hover{
+background:#1e293b;
+color:white;
+}
+
+/* MAIN CONTENT AREA */
+.main{
+margin-left:240px;  /* pushes content beside sidebar */
+padding:30px;
+width:100%;
+}
+
+/* KPI CARDS */
+.cards{
+display:flex;
+gap:20px;
+margin-bottom:25px;
+}
+
 .card{
-background:white;padding:20px;flex:1;border-radius:10px;
+background:white;
+padding:20px;
+flex:1;
+border-radius:10px;
 box-shadow:0 4px 10px rgba(0,0,0,0.05);
+  }
+
+/* TABLE */
+table{
+width:100%;
+background:white;
+border-radius:10px;
+border-collapse:collapse;
 }
-.card h3{font-size:16px;color:#64748b;}
-.card p{font-size:22px;font-weight:bold;margin-top:6px;}
 
-/* Table */
-table{width:100%;background:white;border-radius:10px;border-collapse:collapse;}
-th,td{padding:14px;border-bottom:1px solid #eee;}
-th{background:#f1f5f9;text-align:left;font-weight:500;}
-
-.badge{
-padding:4px 10px;border-radius:20px;font-size:12px;color:white;
+th,td{
+padding:14px;
+border-bottom:1px solid #eee;
 }
-.good{background:#16a34a;}
-.mid{background:#f59e0b;}
-.low{background:#ef4444;}
 
-a{color:#2563eb;text-decoration:none;}
+th{
+background:#f1f5f9;
+text-align:left;
+}
 
-.export-btn{
-margin-top:15px;display:inline-block;padding:10px 14px;
-background:#10b981;color:white;border-radius:6px;text-decoration:none;
+/* BUTTON */
+button{
+padding:10px 15px;
+background:#4f46e5;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
 }
 </style>
+
 </head>
 
 <body>
 
 <div class="sidebar">
-<h2>LeadVerse AI</h2>
+div class="sidebar">
+<h1>LeadVerse AI</h1>
 <a href="#">Dashboard</a>
 <a href="/export_excel">Export Leads</a>
+<a href="/savedprojects">Viewed saved projects</a>
+<a href="/chat">Return to Chat</a>
+
 <a href="/logout">Logout</a>
 </div>
 
 <div class="main">
 
 <div class="top-bar">
-<h1>Lead Intelligence</h1>
-
-<form action="/search" method="POST" class="search-box">
-<input name="keyword" placeholder="Search companies..." required>
-<input name="city" placeholder="City">
-<button>Search</button>
-</form>
+<h2>Lead Intelligence</h2>
 </div>
+
+<div style="background:white;padding:20px;margin-bottom:20px;border-radius:10px;
+box-shadow:0 4px 10px rgba(0,0,0,0.05);">
+
+<h3>Select Target Market</h3>
+
+<form action="/run_targeting" method="POST">
+
+<label>Industries:</label><br>
+<p style="color:#64748b;font-size:14px;">
+Hold CTRL to select multiple industries.
+</p>
+<label>Select Industries:</label><br>
+
+<select name="industry[]" multiple style="width:300px;height:150px;">
+{% for ind in suggested_industry %}
+
+<option value="{{ ind }}">{{ ind }}</option>
+{% endfor %}
+</select>
+
+
+
+
+<br><br>
+
+<label>City:</label><br>
+<input name="city" value="{{ city }}" placeholder="Enter Target City" required>
+
+
+<br><br>
+
+<button type="submit">Find Companies</button>
+
+</form>
+
+</div>
+
+
+
+
 
 <!-- KPI CARDS -->
 <div class="cards">
@@ -89,12 +173,12 @@ background:#10b981;color:white;border-radius:6px;text-decoration:none;
 </div>
 
 <div class="card">
-<h3>With Emails</h3>
+<h4>With Emails</h4>
 <p>{{ companies|selectattr("email")|list|length }}</p>
 </div>
 
 <div class="card">
-<h3>With LinkedIn</h3>
+<h5>With LinkedIn</h5>
 <p>{{ companies|selectattr("company_linkedin")|list|length }}</p>
 </div>
 </div>

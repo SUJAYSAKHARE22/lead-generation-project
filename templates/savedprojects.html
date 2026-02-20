@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Viewed Saved Projects</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+body{
+margin:0;
+font-family:Poppins, Arial, Helvetica, sans-serif;
+background:#f4f6f9;
+}
+
+/* HEADER */
+.header{
+background:white;
+padding:20px 30px;
+box-shadow:0 2px 6px rgba(0,0,0,0.05);
+font-size:22px;
+font-weight:600;
+}
+
+/* MAIN CONTAINER */
+.container{
+padding:30px;
+}
+
+/* GRID */
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+gap:25px;
+}
+
+/* CARD */
+.card{
+background:white;
+padding:25px;
+border-radius:12px;
+box-shadow:0 6px 15px rgba(0,0,0,0.08);
+transition:0.25s ease;
+display:flex;
+flex-direction:column;
+justify-content:space-between;
+min-height:160px;
+}
+
+/* HOVER EFFECT */
+.card:hover{
+transform:translateY(-6px);
+box-shadow:0 12px 25px rgba(0,0,0,0.12);
+}
+
+/* PROJECT TITLE */
+.title{
+font-size:18px;
+font-weight:600;
+color:#111827;
+margin-bottom:20px;
+}
+
+/* SHOW BUTTON */
+.show-btn{
+padding:10px 16px;
+background:#4f46e5;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+font-size:14px;
+transition:0.2s;
+}
+
+.show-btn:hover{
+background:#4338ca;
+}
+
+/* EMPTY STATE */
+.empty{
+text-align:center;
+margin-top:50px;
+color:#6b7280;
+font-size:16px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+📁 Viewed Saved Projects
+</div>
+
+<div class="container">
+
+{% if chats %}
+<div class="grid">
+
+{% for chat in chats %}
+<div class="card">
+
+<div class="title">
+{{ chat[1] }}
+</div>
+
+<button class="show-btn"
+onclick="location.href='/open_project/{{chat[0]}}'">
+Show Companies →
+</button>
+
+</div>
+{% endfor %}
+
+</div>
+{% else %}
+<div class="empty">
+No saved projects yet. Create one from Chat.
+</div>
+{% endif %}
+
+</div>
+
+</body>
+</html>

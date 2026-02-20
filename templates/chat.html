@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LeadVerse AI Chat</title>
+
+    <style>
+        body{
+            margin:0;
+            font-family: Arial, Helvetica, sans-serif;
+            display:flex;
+            height:100vh;
+        }
+
+        /* LEFT SIDEBAR */
+        .sidebar{
+            width:260px;
+            background:#202123;
+            color:white;
+            padding:15px;
+        }
+
+        .sidebar h3{
+            margin-top:0;
+        }
+
+        .chat-item{
+            padding:10px;
+            background:#2a2b32;
+            margin-bottom:8px;
+            cursor:pointer;
+            border-radius:5px;
+        }
+
+        .chat-item:hover{
+            background:#3a3b42;
+        }
+
+        .new-btn{
+            width:100%;
+            padding:10px;
+            background:#10a37f;
+            border:none;
+            color:white;
+            margin-bottom:15px;
+            cursor:pointer;
+            border-radius:5px;
+        }
+
+        input[type="text"]{
+            width:100%;
+            padding:8px;
+            margin-bottom:10px;
+        }
+
+        /* MAIN CHAT AREA */
+        .main{
+            flex:1;
+            display:flex;
+            flex-direction:column;
+            background:#f7f7f8;
+        }
+
+        .messages{
+            flex:1;
+            padding:25px;
+            overflow-y:auto;
+        }
+
+        .msg{
+            margin:15px 0;
+        }
+
+        .user{text-align:right;}
+        .assistant{text-align:left;}
+
+        .bubble{
+            display:inline-block;
+            padding:10px 15px;
+            border-radius:10px;
+            max-width:60%;
+        }
+
+        .user .bubble{
+            background:#10a37f;
+            color:white;
+        }
+
+        .assistant .bubble{
+            background:#e5e7eb;
+        }
+
+        /* INPUT BOX */
+        .input-box{
+            padding:15px;
+            background:white;
+            border-top:1px solid #ddd;
+        }
+
+        .input-box input{
+            width:80%;
+            padding:10px;
+        }
+
+        .input-box button{
+            padding:10px 15px;
+            background:#10a37f;
+            color:white;
+            border:none;
+            cursor:pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- LEFT SIDEBAR -->
+<div class="sidebar">
+    <h3>Projects</h3>
+
+    <!-- CREATE NEW CHAT -->
+    <form action="/new_chat" method="POST">
+        <input type="text" name="title" placeholder="Enter Project Name" required>
+        <button class="new-btn">+ Create Project</button>
+    </form>
+
+    <a href="/dashboard">Return to Dashboard</a>
+
+    <hr>
+
+    <!-- CHAT HISTORY -->
+    {% for chat in chats %}
+        <div class="chat-item"
+             onclick="location.href='/chat_session/{{chat[0]}}'">
+            {{chat[1]}}
+        </div>
+    {% endfor %}
+</div>
+
+<!-- CHAT AREA -->
+<div class="main">
+
+    <!-- MESSAGE LIST -->
+    <div class="messages">
+
+        {% if messages %}
+            {% for role, content in messages %}
+                <div class="msg {{role}}">
+                    <div class="bubble">{{content | safe}}</div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <h2>👋 Describe the product you want to sell.</h2>
+            <p>Example: "AI Predictive Maintenance for factories"</p>
+        {% endif %}
+
+    </div>
+
+    <!-- INPUT BOX -->
+    {% if active_chat %}
+    <div class="input-box">
+        <form action="/send_message" method="POST">
+            <input type="hidden" name="chat_id" value="{{active_chat}}">
+            <input type="text" name="message" placeholder="Type your message..." required>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+    {% endif %}
+    
+    
+
+</div>
+
+</body>
+</html>
