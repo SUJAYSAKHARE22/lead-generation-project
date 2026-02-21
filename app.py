@@ -8,8 +8,10 @@ from openpyxl import Workbook
 from groq import Groq # Added Groq import
 import os
 from dotenv import load_dotenv
+from werkzeug.utils import secure_filename
 load_dotenv()  # Load environment variables from .env file
-
+UPLOAD_FOLDER = os.path.join("static", "project_logos")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app = Flask(__name__)
 app.secret_key = "tars_stable_system"
 
@@ -504,9 +506,29 @@ def new_chat():
         return redirect("/")
 
     title = request.form.get("title", "New Project")
+    description = request.form.get("description", "")
+
+    # 1️⃣ Create chat first
     chat_id = create_chat(session["user"], title)
 
+    # 2️⃣ Save product entry
+    conn = sqlite3.connect("leads.db")
+    conn.execute(
+        "INSERT INTO products (chat_id, product_name, description) VALUES (?, ?, ?)",
+        (chat_id, title, description)
+    )
+    conn.commit()
+    conn.close()
+
+    # 3️⃣ Save uploaded logo
+    logo = request.files.get("logo")
+    if logo and logo.filename != "":
+        filename = secure_filename(f"{chat_id}.png")
+        logo_path = os.path.join(UPLOAD_FOLDER, filename)
+        logo.save(logo_path)
+
     return redirect(f"/chat_session/{chat_id}")
+
 
 
 @app.route("/chat_session/<int:chat_id>")
@@ -546,12 +568,20 @@ def send_message():
     # 4. Save the AI's reply to the database so it shows up in the chat
     save_message(chat_id, "assistant", ai_reply)
 
-    # 5. Update the product description in the DB
+    # 5. Do NOT overwrite original project description
     conn = sqlite3.connect("leads.db")
     cur = conn.cursor()
-    cur.execute("UPDATE products SET description = ? WHERE chat_id = ?", (message, chat_id))
-    if cur.rowcount == 0:
-        cur.execute("INSERT INTO products (chat_id, product_name, description) VALUES (?, ?, ?)", (chat_id, message, message))
+
+    # Only insert if product doesn't exist (first time safety)
+    cur.execute("SELECT id FROM products WHERE chat_id = ?", (chat_id,))
+    exists = cur.fetchone()
+
+    if not exists:
+        cur.execute(
+            "INSERT INTO products (chat_id, product_name, description) VALUES (?, ?, ?)",
+            (chat_id, message, message)
+        )
+
     conn.commit()
     conn.close()
 
@@ -628,9 +658,17 @@ def saved_projects():
     if "user" not in session:
         return redirect("/")
 
-    chats = get_user_chats(session["user"])   # all projects of this user
+    conn = sqlite3.connect("leads.db")
+    rows = conn.execute("""
+        SELECT ch.id, ch.title, p.description
+        FROM chats ch
+        LEFT JOIN products p ON ch.id = p.chat_id
+        WHERE ch.user = ?
+        ORDER BY ch.id DESC
+    """, (session["user"],)).fetchall()
+    conn.close()
 
-    return render_template("savedprojects.html", chats=chats)
+    return render_template("savedprojects.html", chats=rows)
 
 # ===============================
 # OPEN SELECTED PROJECT
@@ -647,7 +685,11 @@ def open_project(chat_id):
 
 @app.route("/export_excel")
 def export_excel():
-    companies = get_companies()
+    if "user" not in session:
+        return redirect("/")
+
+    chat_id = session.get("active_chat")
+    companies = get_companies(chat_id)
     wb = Workbook()
     ws = wb.active
 

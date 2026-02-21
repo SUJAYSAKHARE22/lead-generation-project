@@ -37,29 +37,56 @@ margin-bottom:40px;
 /* GRID */
 .grid{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
 gap:30px;
 }
 
 /* CARD */
 .card{
 background:var(--card);
-padding:30px;
+padding:25px;
 border-radius:20px;
 transition:0.3s;
 box-shadow:0 15px 40px rgba(0,0,0,0.4);
+display:flex;
+flex-direction:column;
+justify-content:space-between;
 }
 
 .card:hover{
 transform:translateY(-6px);
 }
 
+/* PROJECT TOP SECTION */
+.project-top{
+display:flex;
+align-items:flex-start;
+gap:15px;
+margin-bottom:20px;
+}
+
+.project-logo{
+width:60px;
+height:60px;
+border-radius:12px;
+object-fit:cover;
+background:#111827;
+}
+
+/* TEXT AREA */
 .title{
 font-size:18px;
 font-weight:600;
-margin-bottom:25px;
+margin-bottom:6px;
 }
 
+.description{
+color:var(--soft);
+font-size:14px;
+line-height:1.4;
+}
+
+/* BUTTON */
 .show-btn{
 padding:12px 18px;
 background:var(--accent);
@@ -97,8 +124,23 @@ font-size:16px;
 {% for chat in chats %}
 <div class="card">
 
+<div class="project-top">
+
+<img 
+src="{{ url_for('static', filename='project_logos/' ~ chat[0] ~ '.png') }}"
+onerror="this.src='{{ url_for('static', filename='project_logos/default.png') }}'"
+class="project-logo">
+
+<div>
 <div class="title">
 {{ chat[1] }}
+</div>
+
+<div class="description">
+{{ chat[2] or "No description available." }}
+</div>
+</div>
+
 </div>
 
 <button class="show-btn"
