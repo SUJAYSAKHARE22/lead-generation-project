@@ -1,85 +1,85 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Viewed Saved Projects</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<title>Saved Projects | LeadVerse</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 
 <style>
-body{
+:root{
+--bg:#0f172a;
+--card:#1e293b;
+--text:white;
+--accent:#6366f1;
+--soft:#94a3b8;
+}
+
+*{
 margin:0;
-font-family:Poppins, Arial, Helvetica, sans-serif;
-background:#f4f6f9;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter',sans-serif;
+}
+
+body{
+background:var(--bg);
+color:var(--text);
+padding:40px;
 }
 
 /* HEADER */
 .header{
-background:white;
-padding:20px 30px;
-box-shadow:0 2px 6px rgba(0,0,0,0.05);
-font-size:22px;
+font-size:24px;
 font-weight:600;
-}
-
-/* MAIN CONTAINER */
-.container{
-padding:30px;
+margin-bottom:40px;
 }
 
 /* GRID */
 .grid{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-gap:25px;
+gap:30px;
 }
 
 /* CARD */
 .card{
-background:white;
-padding:25px;
-border-radius:12px;
-box-shadow:0 6px 15px rgba(0,0,0,0.08);
-transition:0.25s ease;
-display:flex;
-flex-direction:column;
-justify-content:space-between;
-min-height:160px;
+background:var(--card);
+padding:30px;
+border-radius:20px;
+transition:0.3s;
+box-shadow:0 15px 40px rgba(0,0,0,0.4);
 }
 
-/* HOVER EFFECT */
 .card:hover{
 transform:translateY(-6px);
-box-shadow:0 12px 25px rgba(0,0,0,0.12);
 }
 
-/* PROJECT TITLE */
 .title{
 font-size:18px;
 font-weight:600;
-color:#111827;
-margin-bottom:20px;
+margin-bottom:25px;
 }
 
-/* SHOW BUTTON */
 .show-btn{
-padding:10px 16px;
-background:#4f46e5;
-color:white;
+padding:12px 18px;
+background:var(--accent);
 border:none;
-border-radius:6px;
+border-radius:12px;
+color:white;
 cursor:pointer;
-font-size:14px;
-transition:0.2s;
+font-weight:600;
+transition:0.3s;
 }
 
 .show-btn:hover{
-background:#4338ca;
+background:#4f46e5;
+transform:scale(1.05);
 }
 
-/* EMPTY STATE */
 .empty{
 text-align:center;
-margin-top:50px;
-color:#6b7280;
+margin-top:100px;
+color:var(--soft);
 font-size:16px;
 }
 </style>
@@ -90,8 +90,6 @@ font-size:16px;
 <div class="header">
 📁 Viewed Saved Projects
 </div>
-
-<div class="container">
 
 {% if chats %}
 <div class="grid">
@@ -117,8 +115,6 @@ Show Companies →
 No saved projects yet. Create one from Chat.
 </div>
 {% endif %}
-
-</div>
 
 </body>
 </html>

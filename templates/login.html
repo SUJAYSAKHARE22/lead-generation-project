@@ -1,147 +1,122 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | TARS LeadVerse</title>
-    <style>
-        * { box-sizing: border-box; }
-        
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        }
+<title>Login | LeadVerse AI</title>
 
-        /* Video Background Container */
-        .video-bg {
-            position: fixed;
-            right: 0;
-            bottom: 0;
-            min-width: 100%;
-            min-height: 100%;
-            z-index: -1;
-            filter: brightness(0.6); /* Makes text easier to read */
-            object-fit: cover;
-        }
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600;700&display=swap" rel="stylesheet">
 
-        /* Main Container with Glassmorphism */
-        .container {
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 100%);
-        }
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter',sans-serif;
+}
 
-        .login-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 50px 40px;
-            border-radius: 24px;
-            width: 400px;
-            text-align: center;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            color: white;
-        }
+body{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(135deg,#0f172a,#1e293b);
+overflow:hidden;
+}
 
-        /* The New Big Heading */
-        .main-brand {
-            font-size: 14px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: #818cf8;
-            font-weight: 800;
-            margin-bottom: 8px;
-            display: block;
-        }
+/* Glass Card */
+.login-card{
+background:rgba(255,255,255,0.05);
+backdrop-filter:blur(20px);
+border:1px solid rgba(255,255,255,0.1);
+padding:50px 40px;
+border-radius:28px;
+width:400px;
+text-align:center;
+color:white;
+box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
 
-        h1 {
-            margin: 0 0 10px 0;
-            font-size: 32px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
+.brand{
+font-size:14px;
+letter-spacing:4px;
+text-transform:uppercase;
+color:#818cf8;
+font-weight:700;
+margin-bottom:10px;
+}
 
-        .sub-text {
-            color: #cbd5e1;
-            font-size: 14px;
-            margin-bottom: 30px;
-        }
+h1{
+font-size:32px;
+margin-bottom:10px;
+}
 
-        /* Styled Inputs */
-        input {
-            width: 100%;
-            padding: 14px 16px;
-            margin-bottom: 16px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
-            outline: none;
-            transition: 0.3s;
-        }
+.sub{
+color:#94a3b8;
+margin-bottom:30px;
+font-size:14px;
+}
 
-        input::placeholder { color: #94a3b8; }
+input{
+width:100%;
+padding:14px;
+margin-bottom:18px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.2);
+background:rgba(255,255,255,0.05);
+color:white;
+outline:none;
+transition:0.3s;
+}
 
-        input:focus {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: #818cf8;
-        }
+input:focus{
+border-color:#6366f1;
+background:rgba(255,255,255,0.1);
+}
 
-        button {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            background: #6366f1;
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, background 0.3s;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-        }
+button{
+width:100%;
+padding:14px;
+border:none;
+border-radius:12px;
+background:#6366f1;
+color:white;
+font-weight:600;
+cursor:pointer;
+transition:0.3s;
+box-shadow:0 10px 30px rgba(99,102,241,0.4);
+}
 
-        button:hover {
-            background: #4f46e5;
-            transform: translateY(-2px);
-        }
+button:hover{
+background:#4f46e5;
+transform:translateY(-2px);
+}
 
-        .footer-link {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #94a3b8;
-        }
-    </style>
+.footer{
+margin-top:20px;
+font-size:12px;
+color:#94a3b8;
+}
+</style>
 </head>
+
 <body>
 
-    <video autoplay muted loop playsinline class="video-bg">
-        <source src=""C:\Users\Kartik\Desktop\leaddvideo.mp4"" type="video/mp4">
-    </video>
+<div class="login-card">
 
-    <div class="container">
-        <div class="login-card">
-            <span class="main-brand">TARS Technologies</span>
-            <h1>LeadVerse</h1>
-            <p class="sub-text">Next-Gen AI Intelligence Platform</p>
+<div class="brand">TARS TECHNOLOGIES</div>
+<h1>LeadPilotGen6</h1>
+<p class="sub">Next-Gen AI Lead Intelligence Platform</p>
 
-            <form method="POST">
-                <input type="text" name="username" placeholder="Username" required>
-                <input type="password" name="password" placeholder="Password" required>
-                <button type="submit">Access Dashboard</button>
-            </form>
+<form method="POST">
+<input type="text" name="username" placeholder="Username" required>
+<input type="password" name="password" placeholder="Password" required>
+<button type="submit">Access Dashboard</button>
+</form>
 
-            <div class="footer-link">
-                Secure Encrypted Access
-            </div>
-        </div>
-    </div>
+<div class="footer">
+Secure Encrypted Access
+</div>
+
+</div>
 
 </body>
 </html>

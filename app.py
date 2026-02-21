@@ -13,7 +13,7 @@ load_dotenv()  # Load environment variables from .env file
 app = Flask(__name__)
 app.secret_key = "tars_stable_system"
 
-SERP_API_KEY = "d35d3c85d44e533fa0e77b001b6a026d6f30ea62c6a7be49bac59d071d7637d2"
+SERP_API_KEY = "b6eee82776bb954560718c2bce860251638c2cc5dce73e44a2bc4868a5494fcc"
 
 
 # Initialize Groq Client
@@ -381,7 +381,7 @@ def get_user_chats(user):
 def get_chat_messages(chat_id):
     conn = sqlite3.connect("leads.db")
     rows = conn.execute(
-        "SELECT role, content FROM messages WHERE chat_id=?",
+        "SELECT role, content, timestamp FROM messages WHERE chat_id=? ORDER BY id ASC",
         (chat_id,)
     ).fetchall()
     conn.close()
@@ -478,8 +478,25 @@ def chat_home():
         return redirect("/")
 
     chats = get_user_chats(session["user"])
-    return render_template("chat.html", chats=chats)
+    
+    return render_template(
+        "chat.html",
+        chats=chats,
+        show_create=False   # 👈 Important
+    )
 
+@app.route("/create_project")
+def create_project_page():
+    if "user" not in session:
+        return redirect("/")
+
+    chats = get_user_chats(session["user"])
+
+    return render_template(
+        "chat.html",
+        chats=chats,
+        show_create=True
+    )
 
 @app.route("/new_chat", methods=["POST"])
 def new_chat():
@@ -500,10 +517,14 @@ def chat_session(chat_id):
     messages = get_chat_messages(chat_id)
     chats = get_user_chats(session["user"])
     session["active_chat"] = chat_id
-    return render_template("chat.html",
-                           messages=messages,
-                           chats=chats,
-                           active_chat=chat_id)
+
+    return render_template(
+        "chat.html",
+        messages=messages,
+        chats=chats,
+        active_chat=chat_id,
+        show_create=False   # 👈 Important
+    )
 
 
 @app.route("/send_message", methods=["POST"])

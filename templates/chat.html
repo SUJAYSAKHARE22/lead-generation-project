@@ -1,174 +1,287 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>LeadVerse AI Chat</title>
+<title>LeadPilotGen6 AI Chat</title>
 
-    <style>
-        body{
-            margin:0;
-            font-family: Arial, Helvetica, sans-serif;
-            display:flex;
-            height:100vh;
-        }
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-        /* LEFT SIDEBAR */
-        .sidebar{
-            width:260px;
-            background:#202123;
-            color:white;
-            padding:15px;
-        }
+<style>
+:root{
+--bg:#0f172a;
+--card:#1e293b;
+--text:white;
+--accent:#6366f1;
+--soft:#94a3b8;
+}
 
-        .sidebar h3{
-            margin-top:0;
-        }
+body.light{
+--bg:#f1f5f9;
+--card:#ffffff;
+--text:#0f172a;
+--accent:#6366f1;
+--soft:#475569;
+}
 
-        .chat-item{
-            padding:10px;
-            background:#2a2b32;
-            margin-bottom:8px;
-            cursor:pointer;
-            border-radius:5px;
-        }
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter',sans-serif;
+}
 
-        .chat-item:hover{
-            background:#3a3b42;
-        }
+body{
+display:flex;
+height:100vh;
+background:var(--bg);
+color:var(--text);
+transition:0.3s;
+}
 
-        .new-btn{
-            width:100%;
-            padding:10px;
-            background:#10a37f;
-            border:none;
-            color:white;
-            margin-bottom:15px;
-            cursor:pointer;
-            border-radius:5px;
-        }
+/* SIDEBAR */
 
-        input[type="text"]{
-            width:100%;
-            padding:8px;
-            margin-bottom:10px;
-        }
+.sidebar{
+width:260px;
+background:var(--card);
+padding:20px;
+overflow-y:auto;
+}
 
-        /* MAIN CHAT AREA */
-        .main{
-            flex:1;
-            display:flex;
-            flex-direction:column;
-            background:#f7f7f8;
-        }
+.sidebar h2{
+margin-bottom:20px;
+}
 
-        .messages{
-            flex:1;
-            padding:25px;
-            overflow-y:auto;
-        }
+.sidebar button,
+.sidebar .chat-item{
+width:100%;
+margin-bottom:12px;
+padding:12px;
+border-radius:12px;
+border:none;
+cursor:pointer;
+background:rgba(255,255,255,0.05);
+color:var(--text);
+transition:0.3s;
+}
 
-        .msg{
-            margin:15px 0;
-        }
+.sidebar button:hover,
+.sidebar .chat-item:hover{
+background:var(--accent);
+color:white;
+}
 
-        .user{text-align:right;}
-        .assistant{text-align:left;}
+/* MAIN */
 
-        .bubble{
-            display:inline-block;
-            padding:10px 15px;
-            border-radius:10px;
-            max-width:60%;
-        }
+.main{
+flex:1;
+display:flex;
+flex-direction:column;
+padding:20px;
+}
 
-        .user .bubble{
-            background:#10a37f;
-            color:white;
-        }
+/* TOPBAR */
 
-        .assistant .bubble{
-            background:#e5e7eb;
-        }
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px;
+}
 
-        /* INPUT BOX */
-        .input-box{
-            padding:15px;
-            background:white;
-            border-top:1px solid #ddd;
-        }
+.topbar button{
+background:none;
+border:none;
+color:var(--text);
+font-size:18px;
+cursor:pointer;
+}
 
-        .input-box input{
-            width:80%;
-            padding:10px;
-        }
+/* CREATE PROJECT FORM */
 
-        .input-box button{
-            padding:10px 15px;
-            background:#10a37f;
-            color:white;
-            border:none;
-            cursor:pointer;
-        }
-    </style>
+.create-box{
+background:var(--card);
+padding:30px;
+border-radius:20px;
+max-width:500px;
+}
+
+.create-box h2{
+margin-bottom:20px;
+}
+
+.create-box label{
+display:block;
+margin-top:15px;
+font-size:14px;
+}
+
+.create-box input{
+width:100%;
+padding:12px;
+margin-top:8px;
+border-radius:12px;
+border:none;
+background:rgba(255,255,255,0.05);
+color:var(--text);
+}
+
+.create-box button{
+margin-top:20px;
+background:var(--accent);
+border:none;
+padding:12px 20px;
+border-radius:12px;
+color:white;
+cursor:pointer;
+}
+
+/* CHAT */
+
+.messages{
+flex:1;
+overflow-y:auto;
+}
+
+.msg{
+margin-bottom:20px;
+}
+
+.bubble{
+padding:14px 18px;
+border-radius:18px;
+max-width:70%;
+background:var(--card);
+}
+
+.user .bubble{
+background:var(--accent);
+color:white;
+margin-left:auto;
+}
+
+.input-wrapper{
+margin-top:15px;
+}
+
+.input-box{
+display:flex;
+gap:10px;
+background:var(--card);
+padding:12px;
+border-radius:15px;
+}
+
+.input-box input{
+flex:1;
+padding:12px;
+border-radius:12px;
+border:none;
+background:rgba(255,255,255,0.05);
+color:var(--text);
+}
+
+.input-box button{
+background:var(--accent);
+border:none;
+padding:12px 18px;
+border-radius:12px;
+color:white;
+cursor:pointer;
+}
+
+</style>
 </head>
 
 <body>
 
-<!-- LEFT SIDEBAR -->
 <div class="sidebar">
-    <h3>Projects</h3>
 
-    <!-- CREATE NEW CHAT -->
-    <form action="/new_chat" method="POST">
-        <input type="text" name="title" placeholder="Enter Project Name" required>
-        <button class="new-btn">+ Create Project</button>
-    </form>
+<h2>🚀 LeadVerse</h2>
 
-    <a href="/dashboard">Return to Dashboard</a>
+<button onclick="location.href='/create_project'">
+<i class="fas fa-plus"></i> New Project
+</button>
 
-    <hr>
+{% for chat in chats %}
+<div class="chat-item" onclick="location.href='/chat_session/{{chat[0]}}'">
+<i class="fas fa-comment"></i> {{chat[1]}}
+</div>
+{% endfor %}
 
-    <!-- CHAT HISTORY -->
-    {% for chat in chats %}
-        <div class="chat-item"
-             onclick="location.href='/chat_session/{{chat[0]}}'">
-            {{chat[1]}}
-        </div>
-    {% endfor %}
+<br>
+<a href="/dashboard" style="color:var(--soft);text-decoration:none;">← Return to Dashboard</a>
+
 </div>
 
-<!-- CHAT AREA -->
 <div class="main">
 
-    <!-- MESSAGE LIST -->
-    <div class="messages">
+<div class="topbar">
+<button onclick="location.href='/chat'"><i class="fas fa-robot"></i></button>
+<button onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+</div>
 
-        {% if messages %}
-            {% for role, content in messages %}
-                <div class="msg {{role}}">
-                    <div class="bubble">{{content | safe}}</div>
-                </div>
-            {% endfor %}
-        {% else %}
-            <h2>👋 Describe the product you want to sell.</h2>
-            <p>Example: "AI Predictive Maintenance for factories"</p>
-        {% endif %}
+{% if show_create %}
 
-    </div>
+<!-- ================= CREATE PROJECT FORM ================= -->
 
-    <!-- INPUT BOX -->
-    {% if active_chat %}
-    <div class="input-box">
-        <form action="/send_message" method="POST">
-            <input type="hidden" name="chat_id" value="{{active_chat}}">
-            <input type="text" name="message" placeholder="Type your message..." required>
-            <button type="submit">Send</button>
-        </form>
-    </div>
-    {% endif %}
-    
-    
+<div class="create-box">
+<h2>Create New Project</h2>
+
+<form action="/new_chat" method="POST" enctype="multipart/form-data">
+
+<label>Project Name</label>
+<input type="text" name="title" required>
+
+<label>Description</label>
+<input type="text" name="description" required>
+
+<label>Logo</label>
+<input type="file" name="logo">
+
+<button type="submit">Create Project</button>
+
+</form>
+</div>
+
+{% else %}
+
+<!-- ================= CHAT UI ================= -->
+
+<div class="messages">
+
+{% if messages %}
+{% for role, content, timestamp in messages %}
+<div class="msg {{role}}">
+<div class="bubble">{{content | safe}}</div>
+</div>
+{% endfor %}
+{% else %}
+<p style="color:var(--soft)">Start the conversation 👇</p>
+{% endif %}
 
 </div>
+
+{% if active_chat %}
+<div class="input-wrapper">
+<div class="input-box">
+<form action="/send_message" method="POST" style="display:flex;width:100%;gap:10px;">
+<input type="hidden" name="chat_id" value="{{active_chat}}">
+<input type="text" name="message" placeholder="Describe your product..." required>
+<button type="submit"><i class="fas fa-paper-plane"></i></button>
+</form>
+</div>
+</div>
+{% endif %}
+
+{% endif %}
+
+</div>
+
+<script>
+function toggleTheme(){
+document.body.classList.toggle("light");
+}
+</script>
 
 </body>
 </html>
