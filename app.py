@@ -7,17 +7,19 @@ from flask import Flask, render_template, request, redirect, session, Response
 from openpyxl import Workbook
 from groq import Groq # Added Groq import
 import os
-
+from dotenv import load_dotenv
+load_dotenv()  # Load environment variables from .env file
 
 app = Flask(__name__)
 app.secret_key = "tars_stable_system"
 
-SERP_API_KEY = ""
-GROQ_API_KEY = "" # Add your Groq API Key here
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-# Initialize Groq Client
-client = Groq(api_key=GROQ_API_KEY)
+SERP_API_KEY = "d35d3c85d44e533fa0e77b001b6a026d6f30ea62c6a7be49bac59d071d7637d2"
 
+
+# Initialize Groq Client
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+client = Groq(api_key=GROQ_API_KEY)
 # ===============================
 # DATABASE INIT (COMPANIES TABLE)
 # ===============================
