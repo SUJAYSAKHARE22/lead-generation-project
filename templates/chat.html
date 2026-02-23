@@ -203,7 +203,10 @@ cursor:pointer;
 </button>
 
 {% for chat in chats %}
-<div class="chat-item" onclick="location.href='/chat_session/{{chat[0]}}'">
+<div class="chat-item"
+     onclick="location.href='/chat_session/{{chat[0]}}'"
+     oncontextmenu="showMenu(event, {{chat[0]}})">
+
 <i class="fas fa-comment"></i> {{chat[1]}}
 </div>
 {% endfor %}
@@ -276,12 +279,52 @@ cursor:pointer;
 {% endif %}
 
 </div>
-
+<div id="contextMenu" style="
+position:absolute;
+display:none;
+background:#1e293b;
+padding:10px;
+border-radius:10px;
+box-shadow:0 10px 25px rgba(0,0,0,0.4);
+z-index:1000;
+">
+<div onclick="deleteProject()"
+     style="color:#ef4444;cursor:pointer;">
+🗑 Delete Project
+</div>
+</div>
 <script>
 function toggleTheme(){
 document.body.classList.toggle("light");
 }
 </script>
+<script>
+let selectedProjectId = null;
 
+function showMenu(event, projectId){
+    event.preventDefault();
+
+    selectedProjectId = projectId;
+
+    const menu = document.getElementById("contextMenu");
+    menu.style.display = "block";
+    menu.style.left = event.pageX + "px";
+    menu.style.top = event.pageY + "px";
+}
+
+function deleteProject(){
+    if(!selectedProjectId) return;
+
+    fetch(`/delete_project/${selectedProjectId}`, {
+        method: "POST"
+    }).then(() => {
+        location.reload();
+    });
+}
+
+document.addEventListener("click", function(){
+    document.getElementById("contextMenu").style.display = "none";
+});
+</script>
 </body>
 </html>

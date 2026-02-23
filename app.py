@@ -239,9 +239,9 @@ def search_companies_maps(keyword, city):
 # ===============================
 # DB OPS
 # ===============================
-def clear_companies():
+def clear_companies(chat_id):
     conn = sqlite3.connect("leads.db")
-    conn.execute("DELETE FROM companies")
+    conn.execute("DELETE FROM companies WHERE chat_id = ?", (chat_id,))
     conn.commit()
     conn.close()
 
@@ -435,15 +435,22 @@ def industry_viewed():
         context_text += "\n"
 
     prompt = f"""
-    Analyze the following sales projects and the specific company leads found:
+    Analyze the following sales projects and companies:
+
     {context_text}
-    
-    Tasks:
-    1. Cross-Project Synergy: How can the 'OFFERINGS' be bundled for the 'TARGETED COMPANIES'?
-    2. Lead Quality Check: Based on company descriptions, which project fits which company best?
-    3. Strategic Pitch: Provide a personalized pitch for the top-rated companies mentioned.
-    
-    Format the response in clean HTML using <h3>, <strong>, <ul>, and <li> tags.
+
+    For each company:
+    - Identify the BEST matching project(s)
+    - Return ONLY valid JSON in this format:
+
+    [
+    {{
+        "company": "Company Name",
+        "projects": ["Project 1", "Project 2"]
+    }}
+    ]
+
+    Return ONLY JSON. No explanation. No HTML.
     """
     
     try:
@@ -452,11 +459,20 @@ def industry_viewed():
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7
         )
-        analysis_result = completion.choices[0].message.content
+        response_text = completion.choices[0].message.content.strip()
+
+        start = response_text.find("[")
+        end = response_text.rfind("]") + 1
+
+        if start != -1 and end != -1:
+            json_text = response_text[start:end]
+            analysis_data = json.loads(json_text)
+        else:
+            analysis_data = []
     except Exception as e:
         analysis_result = f"Error generating analysis: {str(e)}"
 
-    return render_template("industry_viewed.html", analysis=analysis_result)
+    return render_template("industry_viewed.html", analysis=analysis_data)
 
 
 # ===============================
@@ -591,6 +607,30 @@ def send_message():
     # Go directly to dashboard
     return redirect("/dashboard")
 
+@app.route("/delete_project/<int:chat_id>", methods=["POST"])
+def delete_project(chat_id):
+    if "user" not in session:
+        return redirect("/")
+
+    conn = sqlite3.connect("leads.db")
+    cur = conn.cursor()
+
+    # Delete related data first (to avoid orphan records)
+    cur.execute("DELETE FROM messages WHERE chat_id = ?", (chat_id,))
+    cur.execute("DELETE FROM products WHERE chat_id = ?", (chat_id,))
+    cur.execute("DELETE FROM companies WHERE chat_id = ?", (chat_id,))
+    cur.execute("DELETE FROM chats WHERE id = ?", (chat_id,))
+
+    conn.commit()
+    conn.close()
+
+    # Delete logo file if exists
+    logo_path = os.path.join(UPLOAD_FOLDER, f"{chat_id}.png")
+    if os.path.exists(logo_path):
+        os.remove(logo_path)
+
+    return "", 204
+
 
 
 
@@ -609,8 +649,8 @@ def run_targeting():
     print("Industries received:", selected_industries)
     print("City received:", city)
 
-    clear_companies()
     chat_id = session.get("active_chat")
+    clear_companies(chat_id)
 
     for ind in selected_industries:
      search_keyword = map_industry_to_search(ind)
@@ -690,8 +730,24 @@ def export_excel():
 
     chat_id = session.get("active_chat")
     companies = get_companies(chat_id)
-    wb = Workbook()
-    ws = wb.active
+
+    conn = sqlite3.connect("leads.db")
+    title = conn.execute(
+        "SELECT title FROM chats WHERE id=?",
+        (chat_id,)
+    ).fetchone()[0]
+    conn.close()
+
+    file_path = "company_leads.xlsx"
+
+    if os.path.exists(file_path):
+        from openpyxl import load_workbook
+        wb = load_workbook(file_path)
+    else:
+        wb = Workbook()
+
+    # Create new sheet with project name
+    ws = wb.create_sheet(title=title[:30])  # Excel max 31 chars
 
     ws.append([
         "Company","Website","Phone","Address","Rating",
@@ -701,13 +757,11 @@ def export_excel():
     for c in companies:
         ws.append(list(c.values()))
 
-    path = "company_leads.xlsx"
-    wb.save(path)
+    wb.save(file_path)
 
-    return Response(open(path, "rb"),
+    return Response(open(file_path, "rb"),
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": "attachment;filename=company_leads.xlsx"})
-
 @app.route("/logout")
 def logout():
     session.clear()
