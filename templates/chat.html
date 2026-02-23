@@ -70,6 +70,29 @@ background:var(--accent);
 color:white;
 }
 
+.chat-item{
+display:flex;
+align-items:center;
+gap:12px;
+padding:12px;
+border-radius:12px;
+background:rgba(255,255,255,0.05);
+cursor:pointer;
+transition:0.3s;
+}
+
+.chat-item:hover{
+background:var(--accent);
+color:white;
+}
+
+.chat-logo{
+width:36px;
+height:36px;
+border-radius:8px;
+object-fit:cover;
+}
+
 /* MAIN */
 
 .main{
@@ -207,7 +230,15 @@ cursor:pointer;
      onclick="location.href='/chat_session/{{chat[0]}}'"
      oncontextmenu="showMenu(event, {{chat[0]}})">
 
-<i class="fas fa-comment"></i> {{chat[1]}}
+{% set logo_path = 'project_logos/' ~ chat[0] ~ '.png' %}
+
+{% if (url_for('static', filename=logo_path)) %}
+<img src="{{ url_for('static', filename=logo_path) }}"
+     class="chat-logo">
+{% endif %}
+
+<span>{{chat[1]}}</span>
+
 </div>
 {% endfor %}
 
