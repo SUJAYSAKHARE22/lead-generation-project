@@ -15,7 +15,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app = Flask(__name__)
 app.secret_key = "tars_stable_system"
 
-SERP_API_KEY = "b6eee82776bb954560718c2bce860251638c2cc5dce73e44a2bc4868a5494fcc"
+SERP_API_KEY = ""
 
 
 # Initialize Groq Client
@@ -49,6 +49,12 @@ def init_db():
             cur.execute(f"ALTER TABLE companies ADD COLUMN {col} TEXT")
         except:
             pass
+    
+    # Safely add status column
+    try:
+        cur.execute("ALTER TABLE companies ADD COLUMN status TEXT")
+    except:
+        pass
 
     conn.commit()
     conn.close()
@@ -766,6 +772,59 @@ def export_excel():
 def logout():
     session.clear()
     return redirect("/")
+
+@app.route("/overview")
+def overview():
+    if "user" not in session:
+        return redirect("/")
+
+    conn = sqlite3.connect("leads.db")
+    rows = conn.execute("""
+        SELECT ch.id, ch.title, p.description
+        FROM chats ch
+        LEFT JOIN products p ON ch.id = p.chat_id
+        WHERE ch.user = ?
+        ORDER BY ch.id DESC
+    """, (session["user"],)).fetchall()
+    conn.close()
+
+    return render_template("overview.html", projects=rows)
+
+@app.route("/overview_project/<int:chat_id>")
+def overview_project(chat_id):
+    if "user" not in session:
+        return redirect("/")
+
+    conn = sqlite3.connect("leads.db")
+
+    companies = conn.execute("""
+        SELECT id, name, website, phone, address, rating,
+               description, email, ceo,
+               company_linkedin, leadership_linkedin, status
+        FROM companies
+        WHERE chat_id = ?
+    """, (chat_id,)).fetchall()
+
+    conn.close()
+
+    return render_template("overview_project.html",
+                           companies=companies,
+                           chat_id=chat_id)
+
+@app.route("/update_status", methods=["POST"])
+def update_status():
+    company_id = request.form["company_id"]
+    status = request.form["status"]
+
+    conn = sqlite3.connect("leads.db")
+    conn.execute(
+        "UPDATE companies SET status=? WHERE id=?",
+        (status, company_id)
+    )
+    conn.commit()
+    conn.close()
+
+    return "", 204
 
 if __name__ == "__main__":
     app.run(debug=True)
