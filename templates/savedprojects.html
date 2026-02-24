@@ -4,6 +4,7 @@
 <title>Saved Projects | LeadVerse</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
 :root{
@@ -22,19 +23,86 @@ font-family:'Inter',sans-serif;
 }
 
 body{
+display:flex;
 background:var(--bg);
 color:var(--text);
+min-height:100vh;
+}
+
+/* ================= SIDEBAR ================= */
+
+.sidebar{
+width:260px;
+background:var(--card);
+padding:30px 20px;
+}
+
+.sidebar h2{
+margin-bottom:30px;
+}
+
+.sidebar a{
+display:flex;
+align-items:center;
+gap:10px;
+color:var(--soft);
+padding:12px;
+margin:10px 0;
+text-decoration:none;
+border-radius:12px;
+transition:0.3s;
+}
+
+.sidebar a:hover{
+background:var(--accent);
+color:white;
+}
+
+/* ================= MAIN ================= */
+
+.main{
+flex:1;
 padding:40px;
+position:relative;
 }
 
 /* HEADER */
+
 .header{
-font-size:24px;
-font-weight:600;
+display:flex;
+justify-content:space-between;
+align-items:center;
 margin-bottom:40px;
 }
 
+.header h2{
+font-weight:600;
+}
+
+/* PLUS BUTTON */
+
+.add-btn{
+width:45px;
+height:45px;
+border-radius:50%;
+border:none;
+background:var(--accent);
+color:white;
+font-size:22px;
+cursor:pointer;
+display:flex;
+align-items:center;
+justify-content:center;
+transition:0.3s;
+}
+
+.add-btn:hover{
+transform:scale(1.1);
+background:#4f46e5;
+}
+
 /* GRID */
+
 .grid{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
@@ -42,6 +110,7 @@ gap:30px;
 }
 
 /* CARD */
+
 .card{
 background:var(--card);
 padding:25px;
@@ -57,10 +126,8 @@ justify-content:space-between;
 transform:translateY(-6px);
 }
 
-/* PROJECT TOP SECTION */
 .project-top{
 display:flex;
-align-items:flex-start;
 gap:15px;
 margin-bottom:20px;
 }
@@ -73,7 +140,6 @@ object-fit:cover;
 background:#111827;
 }
 
-/* TEXT AREA */
 .title{
 font-size:18px;
 font-weight:600;
@@ -83,10 +149,8 @@ margin-bottom:6px;
 .description{
 color:var(--soft);
 font-size:14px;
-line-height:1.4;
 }
 
-/* BUTTON */
 .show-btn{
 padding:12px 18px;
 background:var(--accent);
@@ -103,19 +167,94 @@ background:#4f46e5;
 transform:scale(1.05);
 }
 
-.empty{
-text-align:center;
-margin-top:100px;
-color:var(--soft);
-font-size:16px;
+/* ================= MODAL ================= */
+
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:999;
+}
+
+.modal-content{
+background:var(--card);
+padding:30px;
+border-radius:20px;
+width:400px;
+}
+
+.modal-content h3{
+margin-bottom:20px;
+}
+
+.modal-content label{
+display:block;
+margin-top:15px;
+font-size:14px;
+}
+
+.modal-content input{
+width:100%;
+padding:12px;
+margin-top:8px;
+border-radius:12px;
+border:none;
+background:rgba(255,255,255,0.05);
+color:var(--text);
+}
+
+.modal-content button{
+margin-top:20px;
+background:var(--accent);
+border:none;
+padding:12px 20px;
+border-radius:12px;
+color:white;
+cursor:pointer;
+width:100%;
+}
+
+.close{
+position:absolute;
+top:20px;
+right:30px;
+color:white;
+font-size:20px;
+cursor:pointer;
 }
 </style>
 </head>
 
 <body>
 
+<!-- ================= SIDEBAR ================= -->
+
+<div class="sidebar">
+<h2>🚀 LeadPilotGen6</h2>
+<a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+<a href="/savedprojects"><i class="fas fa-folder"></i> Saved Projects</a>
+<a href="/chat"><i class="fas fa-robot"></i> AI Chat</a>
+<a href="/industry_viewed"><i class="fas fa-brain"></i> Industry Viewed</a>
+<a href="/export_excel"><i class="fas fa-file-excel"></i> Export Leads</a>
+<a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+</div>
+
+<!-- ================= MAIN ================= -->
+
+<div class="main">
+
 <div class="header">
-📁 Viewed Saved Projects
+<h2>📁 Saved Projects</h2>
+
+<button class="add-btn" onclick="openModal()">
+<i class="fas fa-plus"></i>
+</button>
 </div>
 
 {% if chats %}
@@ -125,22 +264,15 @@ font-size:16px;
 <div class="card">
 
 <div class="project-top">
-
 <img 
 src="{{ url_for('static', filename='project_logos/' ~ chat[0] ~ '.png') }}"
 onerror="this.src='{{ url_for('static', filename='project_logos/default.png') }}'"
 class="project-logo">
 
 <div>
-<div class="title">
-{{ chat[1] }}
+<div class="title">{{ chat[1] }}</div>
+<div class="description">{{ chat[2] or "No description available." }}</div>
 </div>
-
-<div class="description">
-{{ chat[2] or "No description available." }}
-</div>
-</div>
-
 </div>
 
 <button class="show-btn"
@@ -153,10 +285,46 @@ Show Companies →
 
 </div>
 {% else %}
-<div class="empty">
-No saved projects yet. Create one from Chat.
-</div>
+<p style="color:var(--soft);margin-top:50px;">No saved projects yet.</p>
 {% endif %}
+
+</div>
+
+<!-- ================= POPUP MODAL ================= -->
+
+<div class="modal" id="projectModal">
+<div class="modal-content">
+<h3>Create New Project</h3>
+
+<form action="/new_chat" method="POST" enctype="multipart/form-data">
+
+<label>Project Name</label>
+<input type="text" name="title" required>
+
+<label>Description</label>
+<input type="text" name="description" required>
+
+<label>Logo</label>
+<input type="file" name="logo">
+
+<button type="submit">Create Project</button>
+
+</form>
+</div>
+</div>
+
+<script>
+function openModal(){
+document.getElementById("projectModal").style.display="flex";
+}
+
+window.onclick=function(e){
+const modal=document.getElementById("projectModal");
+if(e.target==modal){
+modal.style.display="none";
+}
+}
+</script>
 
 </body>
 </html>

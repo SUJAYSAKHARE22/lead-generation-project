@@ -765,7 +765,6 @@ def export_excel():
 @app.route("/logout")
 def logout():
     session.clear()
-    clear_companies()
     return redirect("/")
 
 if __name__ == "__main__":
