@@ -68,8 +68,20 @@ margin-top:5px;
 color:var(--accent);
 text-decoration:none;
 }
+/* ACTIVE SIDEBAR LINK */
+.sidebar a.active{
+    background:var(--accent);
+    color:white !important;
+    font-weight:600;
+}
 </style>
-{% endblock %}
+</head>
+
+<body>
+
+{% include "sidebar.html" %}
+
+<div class="main">
 
 {% block content %}
 <div class="top">

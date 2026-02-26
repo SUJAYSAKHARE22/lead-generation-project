@@ -4,6 +4,81 @@
 
 {% block extra_css %}
 <style>
+:root{
+--bg:#0f172a;
+--card:#1e293b;
+--text:white;
+--accent:#6366f1;
+--soft:#94a3b8;
+}
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter',sans-serif;
+}
+
+body{
+display:flex;
+height:100vh;
+background:var(--bg);
+color:var(--text);
+}
+
+/* ================= SIDEBAR ================= */
+/* ================= SIDEBAR ================= */
+
+.sidebar{
+width:240px;
+background:var(--card);
+padding:25px 18px;
+height:100vh;
+position:fixed;
+left:0;
+top:0;
+display:flex;
+flex-direction:column;
+gap:8px;
+}
+
+/* Sidebar Links */
+
+.sidebar a{
+display:flex;
+align-items:center;
+gap:12px;
+padding:12px 14px;
+border-radius:12px;
+text-decoration:none;
+color:var(--soft);
+font-size:14px;
+transition:0.3s;
+}
+
+.sidebar a:hover{
+background:var(--accent);
+color:white;
+}
+
+/* Active Page Highlight */
+.sidebar a.active{
+background:var(--accent);
+color:white;
+font-weight:600;
+}
+
+
+/* ================= MAIN ================= */
+
+.main{
+flex:1;
+padding:40px;
+margin-left:240px;   /* THIS pushes content beside sidebar */
+}
+
+/* HEADER */
+
 .header{
 display:flex;
 justify-content:space-between;
@@ -148,7 +223,16 @@ cursor:pointer;
 width:100%;
 }
 </style>
-{% endblock %}
+</head>
+
+<body>
+
+<!-- ================= SIDEBAR ================= -->
+
+{% include "sidebar.html" %}
+<!-- ================= MAIN ================= -->
+
+<div class="main">
 
 {% block content %}
 <div class="header">
