@@ -10,6 +10,8 @@
 :root{
 --bg:#0f172a;
 --card:#1e293b;
+--sidebar:#0b1220;   /* NEW → dark sidebar */
+--surface:rgba(255,255,255,0.05);
 --text:white;
 --accent:#6366f1;
 --soft:#94a3b8;
@@ -18,11 +20,12 @@
 body.light{
 --bg:#f1f5f9;
 --card:#ffffff;
+--sidebar:#ffffff;   /* ← becomes white in light mode */
+--surface:#dfe3ea;
 --text:#0f172a;
 --accent:#6366f1;
 --soft:#475569;
 }
-
 *{
 margin:0;
 padding:0;
@@ -42,7 +45,7 @@ transition:0.3s;
 
 .sidebar{
 width:240px;
-background:var(--card);
+background:var(--sidebar);
 padding:25px 18px;
 overflow-y:auto;
 display:flex;
@@ -71,6 +74,8 @@ color:white;
 
 .sidebar h2{
 margin-bottom:20px;
+color: var(--text);
+transition: 0.3s;
 }
 
 .sidebar button,
@@ -81,7 +86,7 @@ padding:12px;
 border-radius:12px;
 border:none;
 cursor:pointer;
-background:rgba(255,255,255,0.05);
+background:var(--surface);
 color:var(--text);
 transition:0.3s;
 }
@@ -98,7 +103,7 @@ align-items:center;
 gap:12px;
 padding:12px;
 border-radius:12px;
-background:rgba(255,255,255,0.05);
+background:var(--surface);
 cursor:pointer;
 transition:0.3s;
 }
@@ -117,12 +122,14 @@ object-fit:cover;
 
 /* MAIN */
 
+
 .main{
 flex:1;
 display:flex;
 flex-direction:column;
 padding:30px;
-background:#0b1220;
+background:var(--bg);
+transition:0.3s;
 }
 
 /* TOPBAR */
@@ -167,7 +174,7 @@ padding:12px;
 margin-top:8px;
 border-radius:12px;
 border:none;
-background:rgba(255,255,255,0.05);
+background:var(--surface);
 color:var(--text);
 }
 
@@ -212,7 +219,7 @@ margin-top:15px;
 .input-box{
 display:flex;
 gap:10px;
-background:#1e293b;
+background:var(--surface);
 padding:14px;
 border-radius:18px;
 box-shadow:0 10px 30px rgba(0,0,0,0.4);
@@ -235,7 +242,33 @@ border-radius:12px;
 color:white;
 cursor:pointer;
 }
+/* ===== FORCE PROJECT TITLE COLOR TO FOLLOW THEME ===== */
 
+.sidebar h2,
+.sidebar h2 span,
+.sidebar h2 i {
+    color: var(--text) !important;
+}
+/* ===== Fix middle sidebar color only in light mode ===== */
+body.light .sidebar[style*="#111827"]{
+    background:#ffffff !important;
+    border-left:1px solid #e5e7eb !important;
+}
+.sidebar a.active{
+    background:var(--accent);
+    color:white;
+    font-weight:600;
+}
+/* ACTIVE PROJECT (LEFT PROJECT LIST) */
+.chat-item.active{
+    background:var(--accent);
+    color:white;
+    font-weight:600;
+}
+
+.chat-item.active span{
+    color:white;
+}
 </style>
 </head>
 
@@ -243,16 +276,7 @@ cursor:pointer;
 
 <!-- ================= DASHBOARD SIDEBAR ================= -->
 
-<div class="sidebar">
-<h2>🚀 LeadPilotGen6</h2>
-<a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
-<a href="/savedprojects"><i class="fas fa-folder"></i> Product</a>
-<a href="/chat"><i class="fas fa-robot"></i> AI Chat</a>
-<a href="/overview"><i class="fas fa-brain"></i> Overview</a>
-<a href="/industry_viewed"><i class="fas fa-brain"></i> Industry Viewed</a>
-<a href="/export_excel"><i class="fas fa-file-excel"></i> Export Leads</a>
-<a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
-</div>
+{% include "sidebar.html" %}
 
 <!-- ================= AI CHAT SIDEBAR ================= -->
 
@@ -264,8 +288,9 @@ cursor:pointer;
 <i class="fas fa-plus"></i> New Project
 </button>
 
+
 {% for chat in chats %}
-<div class="chat-item"
+<div class="chat-item {% if active_chat == chat[0] %}active{% endif %}"
      onclick="location.href='/chat_session/{{chat[0]}}'"
      oncontextmenu="showMenu(event, {{chat[0]}})">
 
@@ -291,35 +316,7 @@ cursor:pointer;
 <i class="fas fa-robot"></i>
 </button>
 <button onclick="toggleTheme()">
-    <script>
-let selectedProjectId = null;
-
-function showMenu(event, projectId){
-    event.preventDefault();
-    selectedProjectId = projectId;
-
-    const menu = document.getElementById("contextMenu");
-
-    menu.style.display = "block";
-    menu.style.left = event.pageX + "px";
-    menu.style.top = event.pageY + "px";
-}
-
-function deleteProject(){
-    if(!selectedProjectId) return;
-
-    fetch(`/delete_project/${selectedProjectId}`, {
-        method: "POST"
-    }).then(() => {
-        location.reload();
-    });
-}
-
-document.addEventListener("click", function(){
-    document.getElementById("contextMenu").style.display = "none";
-});
-</script>
-<i class="fas fa-moon"></i>
+    <i id="themeIcon" class="fas fa-moon"></i>
 </button>
 </div>
 
@@ -388,11 +385,166 @@ z-index:2000;
 min-width:160px;
 ">
 
-<div onclick="deleteProject()"
+<div onclick="openDeleteConfirm()"
      style="color:#ef4444;cursor:pointer;padding:8px 10px;border-radius:8px;">
 🗑 Delete Project
 </div>
 
 </div>
+<!-- ================= DELETE CONFIRM MODAL ================= -->
+
+<div id="deleteConfirmModal" style="
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:3000;
+">
+
+<div style="
+background:#1e293b;
+padding:25px;
+border-radius:14px;
+width:320px;
+text-align:center;
+color:white;
+box-shadow:0 20px 40px rgba(0,0,0,0.5);
+">
+
+<h3 style="margin-bottom:10px;">Confirm Delete</h3>
+
+<p style="color:#94a3b8;margin-bottom:20px;">
+Are you sure you want to delete this project?
+</p>
+
+<div style="display:flex;gap:10px;justify-content:center;">
+
+<button onclick="confirmDelete()" style="
+background:#ef4444;
+border:none;
+padding:10px 18px;
+border-radius:8px;
+color:white;
+cursor:pointer;">
+Yes
+</button>
+
+<button onclick="cancelDelete()" style="
+background:#475569;
+border:none;
+padding:10px 18px;
+border-radius:8px;
+color:white;
+cursor:pointer;">
+No
+</button>
+
+</div>
+</div>
+</div>
+<script>
+let selectedProjectId = null;
+
+function showMenu(event, projectId){
+    event.preventDefault();
+    selectedProjectId = projectId;
+
+    const menu = document.getElementById("contextMenu");
+
+    menu.style.display = "block";
+    menu.style.left = event.pageX + "px";
+    menu.style.top = event.pageY + "px";
+}
+
+function openDeleteConfirm(){
+    if(!selectedProjectId) return;
+
+    document.getElementById("contextMenu").style.display = "none";
+    document.getElementById("deleteConfirmModal").style.display = "flex";
+}
+
+function confirmDelete(){
+    if(!selectedProjectId) return;
+
+    fetch(`/delete_project/${selectedProjectId}`, {
+        method: "POST"
+    }).then(() => {
+        location.reload();
+    });
+}
+
+function cancelDelete(){
+    document.getElementById("deleteConfirmModal").style.display = "none";
+}
+
+document.addEventListener("click", function(e){
+    const menu = document.getElementById("contextMenu");
+
+    if (!menu.contains(e.target)) {
+        menu.style.display = "none";
+    }
+});
+// Close modal if user clicks outside the box
+window.addEventListener("click", function(e){
+    const modal = document.getElementById("deleteConfirmModal");
+
+    if(e.target === modal){
+        modal.style.display = "none";
+    }
+});
+
+// Close modal using ESC key
+document.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){
+        document.getElementById("deleteConfirmModal").style.display = "none";
+    }
+});
+// ===============================
+// 🌙 DARK / LIGHT MODE TOGGLE
+// ===============================
+
+// Apply saved theme when page loads
+window.addEventListener("DOMContentLoaded", function () {
+    const savedTheme = localStorage.getItem("theme");
+    const icon = document.getElementById("themeIcon");
+
+    if (savedTheme === "light") {
+        document.body.classList.add("light");
+        if (icon) {
+            icon.classList.remove("fa-moon");
+            icon.classList.add("fa-sun");
+        }
+    }
+});
+
+// Toggle theme on click
+function toggleTheme() {
+    const body = document.body;
+    const icon = document.getElementById("themeIcon");
+
+    body.classList.toggle("light");
+
+    if (body.classList.contains("light")) {
+        localStorage.setItem("theme", "light");
+
+        if (icon) {
+            icon.classList.remove("fa-moon");
+            icon.classList.add("fa-sun");
+        }
+    } else {
+        localStorage.setItem("theme", "dark");
+
+        if (icon) {
+            icon.classList.remove("fa-sun");
+            icon.classList.add("fa-moon");
+        }
+    }
+}
+</script>
 </body>
 </html>
