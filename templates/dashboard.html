@@ -102,6 +102,16 @@ text-decoration:none;
 </div>
 
 <form action="/run_targeting" method="POST" class="search-box">
+
+{% if suggested_industry %}
+<p style="margin-bottom:10px;">
+<strong>Suggested industries:</strong>
+{% for ind in suggested_industry %}
+<span style="display:inline-block;background:var(--accent);color:white;padding:4px 8px;margin:2px;border-radius:8px;font-size:12px;">{{ ind }}</span>
+{% endfor %}
+</p>
+{% endif %}
+
 <label>Select Industries</label>
 <select name="industry[]" multiple style="height:120px;">
 {% for ind in suggested_industry %}
