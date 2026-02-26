@@ -15,7 +15,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app = Flask(__name__)
 app.secret_key = "tars_stable_system"
 
-SERP_API_KEY = ""
+SERP_API_KEY = "b6eee82776bb954560718c2bce860251638c2cc5dce73e44a2bc4868a5494fcc"
 
 
 # Initialize Groq Client
@@ -36,23 +36,23 @@ def init_db():
         website TEXT,
         phone TEXT,
         address TEXT,
-        rating TEXT
+        rating TEXT,
+        chat_id INTEGER
     )
     """)
 
     # Safely add new columns if not exist
     for col in [
         "description", "email", "ceo",
-        "company_linkedin", "leadership_linkedin"
+        "company_linkedin", "leadership_linkedin", "status"
     ]:
         try:
             cur.execute(f"ALTER TABLE companies ADD COLUMN {col} TEXT")
         except:
             pass
-    
-    # Safely add status column
+    # ensure chat_id exists
     try:
-        cur.execute("ALTER TABLE companies ADD COLUMN status TEXT")
+        cur.execute("ALTER TABLE companies ADD COLUMN chat_id INTEGER")
     except:
         pass
 
@@ -93,9 +93,23 @@ def init_chat_system():
         product_name TEXT,
         description TEXT,
         industry TEXT,
-        location TEXT
+        location TEXT,
+        industry_suggestions TEXT
     )
     """)
+
+    # add column safely if missing
+    try:
+        cur.execute("ALTER TABLE products ADD COLUMN industry_suggestions TEXT")
+    except:
+        pass
+
+    # cleanup potential test project
+    try:
+        cur.execute("DELETE FROM chats WHERE title = 'Test'")
+        cur.execute("DELETE FROM products WHERE chat_id NOT IN (SELECT id FROM chats)")
+    except:
+        pass
 
     conn.commit()
     conn.close()
@@ -352,9 +366,219 @@ def suggest_industries(description):
         print(f"Groq API Error: {e}")
         return ["General Business"]
 
+
+# ---------------------
+# HTML formatting helper
+# ---------------------
+
+def format_chat_html(text):
+    """Escape and convert simple plaintext into HTML suitable for chat bubbles.
+    Preserves line breaks and converts bullets (-,*,🔹,✅) into list items with an icon.
+    """
+    import html
+    escaped = html.escape(text)
+    lines = escaped.splitlines()
+    out = []
+    in_ul = False
+    for line in lines:
+        m = re.match(r'^\s*[-*]\s+(.*)', line)
+        e = re.match(r'^\s*[🔹✅•]\s*(.*)', line)
+        if m or e:
+            if not in_ul:
+                out.append('<ul>')
+                in_ul = True
+            item = (m or e).group(1)
+            out.append(f'<li><i class="fas fa-circle" style="font-size:0.6em;margin-right:4px;"></i>{item}</li>')
+        else:
+            if in_ul:
+                out.append('</ul>')
+                in_ul = False
+            out.append(line)
+    if in_ul:
+        out.append('</ul>')
+    return '<br>'.join(out)
+
 # ===============================
 # CHAT HELPERS (NEW)
 # ===============================
+def generate_sales_ai_reply(chat_id, user_message):
+    try:
+        previous_messages = get_chat_messages(chat_id)
+
+# The system message defines how the assistant behaves.  It should act
+        # like ChatGPT – listening to the entire conversation, sensing intent,
+        # and replying as a friendly, confident human mentor rather than a
+        # rigid workflow engine.
+        conversation = [
+            {
+                "role": "system",
+                "content": """
+                You are an AI assistant very much like ChatGPT, taking on the role of a
+                seasoned startup sales strategist chatting with a founder.
+
+                Your responses should always consider all prior messages in the
+                conversation.  Internally determine the user's intent and craft
+                full, context-aware replies that sound natural and unforced.
+
+                Do NOT behave like a form-filling bot, and do NOT give the user
+                command‑style instructions such as "say X when ready" or "type the
+                word 'suggest industries'."  Speak as if you were talking to a
+                friend – confident, relaxed, and adaptive to the user's tone.
+
+                You may gently steer the conversation when appropriate.  For
+                example, once you have enough information about a project, it's
+                fine to proactively offer industry suggestions or advice without
+                waiting for the user to use a magic phrase.  But always stay
+                conversational and avoid sounding like a checklist.
+
+                Possible intents include greeting, casual chatter, mentioning a
+                project or idea, providing a project name/description, asking for
+                advice, or asking about target markets or industries.
+
+                Your job is to:
+                1. Identify the intent before replying.
+                2. Respond in full sentences with a ChatGPT-like tone.
+                3. Ask at most one simple, conversational follow-up question if
+                   you need more details.
+                4. Avoid long lists or structure unless the user specifically
+                   requests it.
+                5. Transition naturally from understanding the project to offering
+                   suggestions or next steps when the moment feels right.
+                """
+            }
+        ]
+
+        for role, content, _ in previous_messages:
+            conversation.append({"role": role, "content": content})
+
+        conversation.append({"role": "user", "content": user_message})
+
+        # allow longer replies so the assistant can craft full ChatGPT-style
+        # paragraphs when appropriate
+        completion = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=conversation,
+            temperature=0.9,
+            max_tokens=500
+        )
+
+        return completion.choices[0].message.content.strip()
+
+    except Exception as e:
+        print("Sales AI Error:", e)
+        return "Tell me more about what you're building."
+
+
+def get_product_info(chat_id):
+    """Return (product_name, description, industry_suggestions_json) for a chat if present."""
+    conn = sqlite3.connect("leads.db")
+    row = conn.execute(
+        "SELECT product_name, description, industry_suggestions FROM products WHERE chat_id=?",
+        (chat_id,)
+    ).fetchone()
+    conn.close()
+    if row:
+        return row[0], row[1], row[2]
+    return None, None, None
+
+
+def upsert_product(chat_id, product_name=None, description=None, industry_suggestions=None):
+    """Update the products row for chat_id if exists, otherwise insert one.
+    Only non-None fields are updated.  industry_suggestions should be JSON text.
+    """
+    conn = sqlite3.connect("leads.db")
+    cur = conn.cursor()
+
+    existing = cur.execute(
+        "SELECT id FROM products WHERE chat_id=?",
+        (chat_id,)
+    ).fetchone()
+
+    if existing:
+        updates = []
+        params = []
+        if product_name is not None:
+            updates.append("product_name=?")
+            params.append(product_name)
+        if description is not None:
+            updates.append("description=?")
+            params.append(description)
+        if industry_suggestions is not None:
+            updates.append("industry_suggestions=?")
+            params.append(industry_suggestions)
+        if updates:
+            params.append(chat_id)
+            cur.execute(f"UPDATE products SET {', '.join(updates)} WHERE chat_id=?", params)
+    else:
+        cur.execute(
+            "INSERT INTO products (chat_id, product_name, description, industry_suggestions) VALUES (?, ?, ?, ?)",
+            (chat_id, product_name or "", description or "", industry_suggestions or "")
+        )
+
+    conn.commit()
+    conn.close()
+
+
+def user_mentions_project(msg):
+    s = msg.lower()
+    keywords = ["building", "build", "built", "working on", "develop", "developing", "project", "launch"]
+    return any(k in s for k in keywords)
+
+
+def extract_project_name(msg):
+    """Try to pull a project name from an informal sentence.
+    Uses simple regex heuristics; returns None if unsure.
+    """
+    s = msg.strip()
+    # look for explicit phrases
+    m = re.search(r"(?:called|named)\s+([A-Za-z0-9 _-]+)", s, re.I)
+    if m:
+        return m.group(1).strip()
+    m = re.search(r"\b(?:building|built|developing|working on)\s+(?:a |an |the )?([A-Za-z0-9 _-]+)", s, re.I)
+    if m:
+        return m.group(1).strip()
+    return None
+
+
+def user_requests_industry_suggestions(msg):
+    s = msg.lower()
+    # if the message mentions industry/market and also contains words that
+    # imply a request (suggest, idea, recommend, target, where, which)
+    if not ("industry" in s or "market" in s):
+        return False
+    keywords = ["suggest", "idea", "recommend", "target", "where", "which", "ideas"]
+    return any(k in s for k in keywords)
+
+
+def extract_industries_from_text(text):
+    """Look for industry names in an assistant reply.
+
+    Checks numbered or bulleted lines and also scans for known industry
+    keywords. This allows us to capture the exact list the AI provided (for
+    example the six-item list in the user's attachment).
+    """
+    industries = []
+    for line in text.splitlines():
+        line = line.strip()
+        # remove markdown bolding
+        clean = line.replace("**", "").replace("*", "")
+        # look for numbered or bulleted entries ending with a colon
+        m = re.match(r'^(?:\d+\.|[-*•])\s*([^:]+):', clean)
+        if m:
+            industries.append(m.group(1).strip())
+    # if we found nothing via bullets, fall back to capitalized phrases
+    if not industries:
+        caps = re.findall(r"\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)+)\b", text)
+        for cap in caps:
+            industries.append(cap)
+    # deduplicate preserving order
+    seen = set()
+    out = []
+    for ind in industries:
+        if ind not in seen:
+            seen.add(ind)
+            out.append(ind)
+    return out
 
 def create_chat(user, title):
     conn = sqlite3.connect("leads.db")
@@ -545,7 +769,28 @@ def new_chat():
     # 3️⃣ Save uploaded logo
     logo = request.files.get("logo")
     if logo and logo.filename != "":
-        filename = secure_filename(f"{chat_id}.png")
+        # Backend validation: allow only PNG/JPEG by MIME type and extension
+        filename_raw = secure_filename(logo.filename)
+        ext = filename_raw.rsplit('.', 1)[-1].lower() if '.' in filename_raw else ''
+        allowed_ext = {'png', 'jpg', 'jpeg'}
+        allowed_mimes = {'image/png', 'image/jpeg'}
+        mime = getattr(logo, 'mimetype', '') or getattr(logo, 'content_type', '')
+
+        if ext not in allowed_ext or mime not in allowed_mimes:
+            # rollback product/chat created earlier to avoid orphan rows
+            try:
+                conn = sqlite3.connect("leads.db")
+                cur = conn.cursor()
+                cur.execute("DELETE FROM products WHERE chat_id=?", (chat_id,))
+                cur.execute("DELETE FROM chats WHERE id=?", (chat_id,))
+                conn.commit()
+                conn.close()
+            except Exception:
+                pass
+            return "Invalid file type. Only PNG and JPG images are allowed.", 400
+
+        # save file with chat_id-based filename preserving extension
+        filename = secure_filename(f"{chat_id}.{ext}")
         logo_path = os.path.join(UPLOAD_FOLDER, filename)
         logo.save(logo_path)
 
@@ -576,42 +821,124 @@ def send_message():
     chat_id = request.form["chat_id"]
     message = request.form["message"]
 
-    # 1. Save what the user said
-    save_message(chat_id, "user", message)
+    # helper for assistant replies defined here so it can access send_message scope
+    def save_assistant_reply(chat_id, reply):
+        save_message(chat_id, "assistant", format_chat_html(reply))
+        inds = extract_industries_from_text(reply)
+        if inds:
+            session["suggested_industry"] = inds
+            import json as _json
+            upsert_product(chat_id, industry_suggestions=_json.dumps(inds))
 
-    # 2. Get the AI to suggest industries (this uses your existing function)
-    industries = suggest_industries(message)
-    session["suggested_industry"] = industries
-    
-    # 3. Create a friendly AI response for the chat UI
-    industry_str = ", ".join(industries)
-    ai_reply = f"I've analyzed your project. I recommend targeting: **{industry_str}**. <br><br>I've updated your Dashboard with these leads. Would you like to refine the search or view the results?"
-    
-    # 4. Save the AI's reply to the database so it shows up in the chat
-    save_message(chat_id, "assistant", ai_reply)
+    # persist the user's message (format for HTML)
+    save_message(chat_id, "user", format_chat_html(message))
 
-    # 5. Do NOT overwrite original project description
-    conn = sqlite3.connect("leads.db")
-    cur = conn.cursor()
+    # Conversation phase is stored per-chat in the session
+    phase_key = f"phase_{chat_id}"
+    phase = session.get(phase_key, "greeting")
 
-    # Only insert if product doesn't exist (first time safety)
-    cur.execute("SELECT id FROM products WHERE chat_id = ?", (chat_id,))
-    exists = cur.fetchone()
+    # Normalize incoming message
+    msg_text = message.strip()
 
-    if not exists:
-        cur.execute(
-            "INSERT INTO products (chat_id, product_name, description) VALUES (?, ?, ?)",
-            (chat_id, message, message)
+    # Phase: greeting -> detect whether user mentions a project
+    if phase == "greeting":
+        if user_mentions_project(msg_text):
+            # try to guess a name if it's embedded in the message
+            name = extract_project_name(msg_text)
+            if name:
+                session[f"project_name_{chat_id}"] = name
+                upsert_product(chat_id, product_name=name)
+                reply = f"{name} sounds interesting! Tell me more about what it does and who uses it."
+            else:
+                reply = "Oh nice – tell me about the project you're working on."
+            session[phase_key] = "project_details"
+        else:
+            reply = "Hey there! I'm your sales strategist – what's on your mind today?"
+
+        save_assistant_reply(chat_id, reply)
+        return redirect(f"/chat_session/{chat_id}")
+
+    # Phase: expecting full project details
+    if phase == "project_details":
+        # if user asks about industries before giving the description, handle it
+        if user_requests_industry_suggestions(msg_text):
+            pname, pdesc, _ = get_product_info(chat_id)
+            if not pdesc:
+                reply = "I haven't got a description of the project yet – could you tell me a bit about it first?"
+                save_assistant_reply(chat_id, reply)
+                return redirect(f"/chat_session/{chat_id}")
+
+            industries = suggest_industries(pdesc)
+            reasons = [f"{ind}: seems relevant based on what you've shared." for ind in industries]
+            reply = "Here are some industries I'd target:\n" + "\n".join(reasons)
+            session["suggested_industry"] = industries
+            import json as _json
+            upsert_product(chat_id, industry_suggestions=_json.dumps(industries))
+            save_assistant_reply(chat_id, reply)
+            # remain in project_details so user can continue description if desired
+            return redirect(f"/chat_session/{chat_id}")
+
+        # otherwise treat message as project description
+        project_description = msg_text
+        session[f"project_description_{chat_id}"] = project_description
+        upsert_product(chat_id, description=project_description)
+
+        # Summarize understanding and also give an immediate industry hint
+        pname, pdesc, _ = get_product_info(chat_id)
+        industries = suggest_industries(pdesc)
+        industry_msg = ""
+        if industries:
+            reasons = [f"{ind}: seems relevant based on the product focus." for ind in industries]
+            industry_msg = "\n\nBy the way, here are a few industries that look like a good fit:\n" + "\n".join(reasons)
+            # store suggestions as well
+            import json as _json
+            session["suggested_industry"] = industries
+            upsert_product(chat_id, industry_suggestions=_json.dumps(industries))
+
+        summary = (
+            "Thanks for sharing! Here's how I understand it:\n"
+            f"– Project: {pname or '(no name)'}\n"
+            f"– Description: {pdesc[:800] if pdesc else '(no description)'}"
+            f"{industry_msg}\n\n"
+            "I've saved that for you.  If you'd like more ideas or help on next steps, just say the word – I'm here."
         )
 
-    conn.commit()
-    conn.close()
+        session[phase_key] = "idle"
+        save_assistant_reply(chat_id, summary)
+        return redirect(f"/chat_session/{chat_id}")
 
-    # STAY in the chat so the user can see the AI's reply
+    # Phase: idle / project understood — let LLM handle general chit‑chat; only
+    # intercept when the user *explicitly* wants industry ideas.
+    if phase in ("idle", "project_understood"):
+        if user_requests_industry_suggestions(msg_text):
+            pname, pdesc, _ = get_product_info(chat_id)
+            if not pdesc:
+                reply = "I don't have a project description saved yet — could you tell me a bit about it first?"
+                save_assistant_reply(chat_id, reply)
+                return redirect(f"/chat_session/{chat_id}")
+
+            # let the LLM craft a more descriptive reply, but always fall back
+            # to a deterministic list if parsing fails
+            ai_reply = generate_sales_ai_reply(chat_id, msg_text)
+            inds = extract_industries_from_text(ai_reply)
+            if not inds:
+                inds = suggest_industries(pdesc)
+            session["suggested_industry"] = inds
+            import json as _json
+            upsert_product(chat_id, industry_suggestions=_json.dumps(inds))
+            save_assistant_reply(chat_id, ai_reply)
+            return redirect(f"/chat_session/{chat_id}")
+
+        # otherwise defer to the model for a natural conversational answer
+        ai_reply = generate_sales_ai_reply(chat_id, msg_text)
+        save_assistant_reply(chat_id, ai_reply)
+        return redirect(f"/chat_session/{chat_id}")
+
+    # Fallback: if phase unknown, reset to greeting and respond warmly
+    session[phase_key] = "greeting"
+    fallback = "Hey — tell me if you're building something, or ask me to review a project."
+    save_message(chat_id, "assistant", format_chat_html(fallback))
     return redirect(f"/chat_session/{chat_id}")
-
-    # Go directly to dashboard
-    return redirect("/dashboard")
 
 @app.route("/delete_project/<int:chat_id>", methods=["POST"])
 def delete_project(chat_id):
@@ -637,7 +964,7 @@ def delete_project(chat_id):
 
     return "", 204
 
-
+   
 # ===============================
 # RUN TARGETING (FROM DASHBOARD BUTTON)
 # ===============================
@@ -656,7 +983,7 @@ def run_targeting():
     clear_companies(chat_id)
 
     for ind in selected_industries:
-     search_keyword = map_industry_to_search(ind)
+        search_keyword = map_industry_to_search(ind)
     companies = search_companies_maps(search_keyword, city)
 
     for c in companies:
@@ -666,7 +993,6 @@ def run_targeting():
     session["suggested_industry"] = selected_industries
 
     return redirect("/dashboard")
-
 
 
 
@@ -683,7 +1009,17 @@ def dashboard():
     companies = get_companies(chat_id)
 
 
-    suggested = session.get("suggested_industry", [])
+    # try loading persisted suggestions from the product row
+    suggested = []
+    if chat_id:
+        _, _, stored = get_product_info(chat_id)
+        if stored:
+            try:
+                suggested = json.loads(stored)
+            except:
+                suggested = []
+    if not suggested:
+        suggested = session.get("suggested_industry", [])
     city = session.get("selected_city", "")
 
     print("Dashboard industries:", suggested)   # DEBUG
@@ -765,48 +1101,6 @@ def export_excel():
     return Response(open(file_path, "rb"),
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": "attachment;filename=company_leads.xlsx"})
-
-@app.route("/call_for_action")
-def call_for_action():
-    if "user" not in session:
-        return redirect("/")
-
-    conn = sqlite3.connect("leads.db")
-    rows = conn.execute("""
-        SELECT ch.id, ch.title, p.description
-        FROM chats ch
-        LEFT JOIN products p ON ch.id = p.chat_id
-        WHERE ch.user = ?
-        ORDER BY ch.id DESC
-    """, (session["user"],)).fetchall()
-
-    projects = []
-    for chat_id, title, description in rows:
-        company_rows = conn.execute("""
-            SELECT name, description, rating, email, phone, address, website
-            FROM companies
-            WHERE chat_id = ? AND status = 'cta'
-            ORDER BY id DESC
-        """, (chat_id,)).fetchall()
-
-        if company_rows:
-            projects.append({
-                "title": title,
-                "description": description,
-                "companies": [{
-                    "name": c[0],
-                    "description": c[1],
-                    "rating": c[2],
-                    "email": c[3],
-                    "phone": c[4],
-                    "address": c[5],
-                    "website": c[6]
-                } for c in company_rows]
-            })
-
-    conn.close()
-
-    return render_template("call_for_action.html", projects=projects)
 @app.route("/logout")
 def logout():
     session.clear()
@@ -829,7 +1123,6 @@ def overview():
 
     return render_template("overview.html", projects=rows)
 
-
 @app.route("/overview_project/<int:chat_id>")
 def overview_project(chat_id):
     if "user" not in session:
@@ -847,9 +1140,23 @@ def overview_project(chat_id):
 
     conn.close()
 
-    return render_template("overview_project.html",
-                           companies=companies,
-                           chat_id=chat_id)
+    # load product info so we can show suggested industries in the view
+    pname, pdesc, stored = get_product_info(chat_id)
+    suggested = []
+    if stored:
+        try:
+            suggested = json.loads(stored)
+        except:
+            suggested = []
+
+    return render_template(
+        "overview_project.html",
+        companies=companies,
+        chat_id=chat_id,
+        product_name=pname,
+        product_description=pdesc,
+        suggested_industry=suggested
+    )
 
 @app.route("/update_status", methods=["POST"])
 def update_status():
@@ -868,4 +1175,3 @@ def update_status():
 
 if __name__ == "__main__":
     app.run(debug=True)
-

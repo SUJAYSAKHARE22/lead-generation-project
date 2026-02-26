@@ -266,9 +266,10 @@ cursor:pointer;
 <div class="card">
 
 <div class="project-top">
-<img 
+<img
 src="{{ url_for('static', filename='project_logos/' ~ chat[0] ~ '.png') }}"
-onerror="this.src='{{ url_for('static', filename='project_logos/default.png') }}'"
+data-fallback="{{ url_for('static', filename='project_logos/default.png') }}"
+onerror="this.src=this.dataset.fallback"
 class="project-logo">
 
 <div>
@@ -307,7 +308,30 @@ Show Companies →
 <input type="text" name="description" required>
 
 <label>Logo</label>
-<input type="file" name="logo">
+<input type="file" name="logo" id="modalLogoInput" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+	const logo = document.getElementById('modalLogoInput');
+	if(!logo) return;
+	logo.addEventListener('change', function(){
+		const f = this.files[0];
+		if(!f) return;
+		const allowed = ['image/png','image/jpeg'];
+		if(!allowed.includes(f.type)){
+			alert('Invalid file type. Please select a PNG or JPG image.');
+			this.value = '';
+			return;
+		}
+		const name = f.name.toLowerCase();
+		if(!name.endsWith('.png') && !name.endsWith('.jpg') && !name.endsWith('.jpeg')){
+			alert('Invalid file extension. Use .png, .jpg or .jpeg');
+			this.value = '';
+			return;
+		}
+	});
+});
+</script>
 
 <button type="submit">Create Project</button>
 
