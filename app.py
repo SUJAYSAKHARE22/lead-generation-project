@@ -638,9 +638,6 @@ def delete_project(chat_id):
     return "", 204
 
 
-
-
-   
 # ===============================
 # RUN TARGETING (FROM DASHBOARD BUTTON)
 # ===============================
@@ -768,6 +765,48 @@ def export_excel():
     return Response(open(file_path, "rb"),
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": "attachment;filename=company_leads.xlsx"})
+
+@app.route("/call_for_action")
+def call_for_action():
+    if "user" not in session:
+        return redirect("/")
+
+    conn = sqlite3.connect("leads.db")
+    rows = conn.execute("""
+        SELECT ch.id, ch.title, p.description
+        FROM chats ch
+        LEFT JOIN products p ON ch.id = p.chat_id
+        WHERE ch.user = ?
+        ORDER BY ch.id DESC
+    """, (session["user"],)).fetchall()
+
+    projects = []
+    for chat_id, title, description in rows:
+        company_rows = conn.execute("""
+            SELECT name, description, rating, email, phone, address, website
+            FROM companies
+            WHERE chat_id = ? AND status = 'cta'
+            ORDER BY id DESC
+        """, (chat_id,)).fetchall()
+
+        if company_rows:
+            projects.append({
+                "title": title,
+                "description": description,
+                "companies": [{
+                    "name": c[0],
+                    "description": c[1],
+                    "rating": c[2],
+                    "email": c[3],
+                    "phone": c[4],
+                    "address": c[5],
+                    "website": c[6]
+                } for c in company_rows]
+            })
+
+    conn.close()
+
+    return render_template("call_for_action.html", projects=projects)
 @app.route("/logout")
 def logout():
     session.clear()
@@ -789,6 +828,7 @@ def overview():
     conn.close()
 
     return render_template("overview.html", projects=rows)
+
 
 @app.route("/overview_project/<int:chat_id>")
 def overview_project(chat_id):
@@ -828,3 +868,4 @@ def update_status():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
