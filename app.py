@@ -20,7 +20,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app = Flask(__name__)
 app.secret_key = "tars_stable_system"
 
-SERP_API_KEY = ""
+SERP_API_KEY = "702c63ae7215840ef169436872c89fcfb19913954d04015f015bb025eeaf1bf9"
 
 
 # Initialize Groq Client
@@ -492,7 +492,7 @@ def industry_viewed():
     except Exception as e:
         analysis_result = f"Error generating analysis: {str(e)}"
 
-    return render_template("industry_viewed.html", analysis=analysis_data)
+    return render_template("industry_viewed.html", analysis=analysis_data, active_page="industry")
 
 
 # ===============================
@@ -516,11 +516,15 @@ def chat_home():
         return redirect("/")
 
     chats = get_user_chats(session["user"])
-    
+
+    active_chat = session.get("active_chat")   # ✅ ADD THIS LINE
+
     return render_template(
         "chat.html",
         chats=chats,
-        show_create=False   # 👈 Important
+        show_create=False,
+        active_chat=active_chat,
+        active_page="chat"
     )
 
 @app.route("/create_project")
@@ -703,11 +707,12 @@ def dashboard():
     print("Dashboard industries:", suggested)   # DEBUG
 
     return render_template(
-        "dashboard.html",
-        companies=companies,
-        suggested_industry=suggested,
-        city=city
-    )
+    "dashboard.html",
+    companies=companies,
+    suggested_industry=suggested,
+    city=city,
+    active_page="dashboard"
+)
 
 
 @app.route("/savedprojects")
@@ -725,7 +730,7 @@ def saved_projects():
     """, (session["user"],)).fetchall()
     conn.close()
 
-    return render_template("savedprojects.html", chats=rows)
+    return render_template("savedprojects.html", chats=rows, active_page="product")
 
 # ===============================
 # OPEN SELECTED PROJECT
@@ -841,7 +846,7 @@ def overview():
     """, (session["user"],)).fetchall()
     conn.close()
 
-    return render_template("overview.html", projects=rows)
+    return render_template("overview.html", projects=rows, active_page="overview")
 
 
 @app.route("/overview_project/<int:chat_id>")

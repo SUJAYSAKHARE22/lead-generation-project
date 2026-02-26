@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}LeadPilotGen6{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+    :root{
+        --bg:#0f172a;
+        --card:#1e293b;
+        --text:white;
+        --accent:#6366f1;
+        --soft:#94a3b8;
+    }
+
+    html{
+        font-size:16px;
+        -webkit-text-size-adjust:100%;
+        text-size-adjust:100%;
+    }
+
+    *{
+        margin:0;
+        padding:0;
+        box-sizing:border-box;
+        font-family:'Inter',sans-serif;
+    }
+
+    body{
+        display:flex;
+        background:var(--bg);
+        color:var(--text);
+        min-height:100vh;
+    }
+
+    /* FIXED SIDEBAR */
+
+    .sidebar{
+        width:260px;
+        min-width:260px;
+        max-width:260px;
+        background:var(--card);
+        padding:30px 20px;
+        position:fixed;
+        left:0;
+        top:0;
+        height:100vh;
+        overflow-y:auto;
+        scrollbar-gutter:stable;
+    }
+
+    .sidebar h2{
+        margin-bottom:30px;
+    }
+
+    .sidebar a{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        color:var(--soft);
+        padding:12px;
+        margin:10px 0;
+        text-decoration:none;
+        border-radius:12px;
+        transition:0.3s;
+    }
+
+    .sidebar a:visited{
+        color:var(--soft);
+    }
+
+    .sidebar a:hover{
+        background:var(--accent);
+        color:white;
+    }
+
+    /* PAGE CONTENT */
+
+    .page-content{
+        margin-left:260px;
+        width:100%;
+        padding:40px;
+    }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>🚀 LeadPilotGen6</h2>
+
+    <a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+    <a href="/savedprojects"><i class="fas fa-folder"></i> Product</a>
+    <a href="/chat"><i class="fas fa-robot"></i> AI Chat</a>
+    <a href="/overview"><i class="fas fa-brain"></i> Overview</a>
+    <a href="/industry_viewed"><i class="fas fa-brain"></i> Industry Viewed</a>
+    <a href="/export_excel"><i class="fas fa-file-excel"></i> Export Leads</a>
+    <a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+</div>
+
+<div class="page-content">
+    {% block content %}{% endblock %}
+</div>
+
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>
