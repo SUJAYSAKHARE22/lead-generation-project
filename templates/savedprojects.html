@@ -1,11 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Saved Projects | LeadVerse</title>
+{% extends "base.html" %}
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% block title %}Saved Projects | LeadVerse{% endblock %}
 
+{% block extra_css %}
 <style>
 :root{
 --bg:#0f172a;
@@ -93,8 +90,6 @@ margin-bottom:40px;
 font-weight:600;
 }
 
-/* PLUS BUTTON */
-
 .add-btn{
 width:45px;
 height:45px;
@@ -115,15 +110,11 @@ transform:scale(1.1);
 background:#4f46e5;
 }
 
-/* GRID */
-
 .grid{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
 gap:30px;
 }
-
-/* CARD */
 
 .card{
 background:var(--card);
@@ -181,8 +172,6 @@ background:#4f46e5;
 transform:scale(1.05);
 }
 
-/* ================= MODAL ================= */
-
 .modal{
 position:fixed;
 top:0;
@@ -233,15 +222,6 @@ color:white;
 cursor:pointer;
 width:100%;
 }
-
-.close{
-position:absolute;
-top:20px;
-right:30px;
-color:white;
-font-size:20px;
-cursor:pointer;
-}
 </style>
 </head>
 
@@ -254,70 +234,50 @@ cursor:pointer;
 
 <div class="main">
 
+{% block content %}
 <div class="header">
 <h2>📁 Saved Projects</h2>
-
-<button class="add-btn" onclick="openModal()">
-<i class="fas fa-plus"></i>
-</button>
+<button class="add-btn" onclick="openModal()"><i class="fas fa-plus"></i></button>
 </div>
 
 {% if chats %}
 <div class="grid">
-
 {% for chat in chats %}
 <div class="card">
-
 <div class="project-top">
-<img 
-src="{{ url_for('static', filename='project_logos/' ~ chat[0] ~ '.png') }}"
+<img src="{{ url_for('static', filename='project_logos/' ~ chat[0] ~ '.png') }}"
 onerror="this.src='{{ url_for('static', filename='project_logos/default.png') }}'"
 class="project-logo">
-
 <div>
 <div class="title">{{ chat[1] }}</div>
 <div class="description">{{ chat[2] or "No description available." }}</div>
 </div>
 </div>
-
-<button class="show-btn"
-onclick="location.href='/open_project/{{chat[0]}}'">
-Show Companies →
-</button>
-
+<button class="show-btn" onclick="location.href='/open_project/{{chat[0]}}'">Show Companies →</button>
 </div>
 {% endfor %}
-
 </div>
 {% else %}
 <p style="color:var(--soft);margin-top:50px;">No saved projects yet.</p>
 {% endif %}
 
-</div>
-
-<!-- ================= POPUP MODAL ================= -->
-
 <div class="modal" id="projectModal">
 <div class="modal-content">
 <h3>Create New Project</h3>
-
 <form action="/new_chat" method="POST" enctype="multipart/form-data">
-
 <label>Project Name</label>
 <input type="text" name="title" required>
-
 <label>Description</label>
 <input type="text" name="description" required>
-
 <label>Logo</label>
 <input type="file" name="logo">
-
 <button type="submit">Create Project</button>
-
 </form>
 </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
 function openModal(){
 document.getElementById("projectModal").style.display="flex";
@@ -330,6 +290,4 @@ modal.style.display="none";
 }
 }
 </script>
-
-</body>
-</html>
+{% endblock %}

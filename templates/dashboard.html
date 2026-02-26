@@ -1,82 +1,15 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>LeadVerse Dashboard</title>
+{% extends "base.html" %}
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% block title %}LeadVerse Dashboard{% endblock %}
 
+{% block extra_css %}
 <style>
-
-:root{
---bg:#0f172a;
---card:#1e293b;
---text:white;
---accent:#6366f1;
---soft:#94a3b8;
-}
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Inter',sans-serif;
-}
-
-body{
-display:flex;
-background:var(--bg);
-color:var(--text);
-min-height:100vh;
-}
-
-/* SIDEBAR */
-
-.sidebar{
-width:260px;
-background:var(--card);
-padding:30px 20px;
-height:relative;
-}
-
-.sidebar h2{
-margin-bottom:30px;
-}
-
-.sidebar a{
-display:flex;
-align-items:center;
-gap:10px;
-color:var(--soft);
-padding:12px;
-margin:10px 0;
-text-decoration:none;
-border-radius:12px;
-transition:0.3s;
-}
-
-.sidebar a:hover{
-background:var(--accent);
-color:white;
-}
-
-/* MAIN */
-
-.main{
-flex:1;
-padding:40px;
-}
-
-/* TOP */
-
 .top{
 display:flex;
 justify-content:space-between;
 align-items:center;
 margin-bottom:30px;
 }
-
-/* FORM */
 
 .search-box{
 background:var(--card);
@@ -105,8 +38,6 @@ color:white;
 cursor:pointer;
 }
 
-/* GRID */
-
 .grid{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
@@ -133,7 +64,7 @@ display:inline-block;
 margin-top:5px;
 }
 
-a{
+.grid a{
 color:var(--accent);
 text-decoration:none;
 }
@@ -152,12 +83,12 @@ text-decoration:none;
 
 <div class="main">
 
+{% block content %}
 <div class="top">
 <h2>Lead Intelligence</h2>
 </div>
 
 <form action="/run_targeting" method="POST" class="search-box">
-
 <label>Select Industries</label>
 <select name="industry[]" multiple style="height:120px;">
 {% for ind in suggested_industry %}
@@ -169,14 +100,11 @@ text-decoration:none;
 <input name="city" value="{{ city }}" required>
 
 <button type="submit">Find Companies</button>
-
 </form>
 
 <div class="grid">
-
 {% for c in companies %}
 <div class="card">
-
 <h3>{{ c.name }}</h3>
 
 {% if c.rating %}
@@ -184,7 +112,6 @@ text-decoration:none;
 {% endif %}
 
 <p style="color:var(--soft);margin-top:10px;">{{ c.description }}</p>
-
 <p>📍 {{ c.address }}</p>
 
 {% if c.email %}<p>📧 {{ c.email }}</p>{% endif %}
@@ -197,13 +124,7 @@ text-decoration:none;
 {% if c.company_linkedin %}
 <p><a href="{{ c.company_linkedin }}" target="_blank">🏢 Company LinkedIn</a></p>
 {% endif %}
-
 </div>
 {% endfor %}
-
 </div>
-
-</div>
-
-</body>
-</html>
+{% endblock %}

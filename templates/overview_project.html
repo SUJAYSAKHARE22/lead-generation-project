@@ -1,48 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Lead Qualification | LeadPilotGen6</title>
+{% extends "base.html" %}
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% block title %}Lead Qualification | LeadPilotGen6{% endblock %}
 
+{% block extra_css %}
 <style>
-
-:root{
---bg:#0f172a;
---card:#1e293b;
---text:white;
---accent:#6366f1;
---soft:#94a3b8;
---danger:#ef4444;
---success:#16a34a;
-}
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Inter',sans-serif;
-}
-
-body{
-background:var(--bg);
-color:var(--text);
-padding:40px;
-}
-
-/* HEADER */
-
-h2{
-margin-bottom:25px;
-}
-
-/* STATUS BUTTONS */
-
 .status-buttons{
 display:flex;
 gap:15px;
 margin-bottom:30px;
+flex-wrap:wrap;
 }
 
 .status-buttons button{
@@ -59,15 +25,11 @@ transition:0.3s;
 background:var(--accent);
 }
 
-/* GRID */
-
 .grid{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
 gap:25px;
 }
-
-/* CARD */
 
 .card{
 background:var(--card);
@@ -90,8 +52,6 @@ margin-bottom:8px;
 color:var(--soft);
 font-size:14px;
 }
-
-/* MODAL */
 
 .modal{
 position:fixed;
@@ -122,10 +82,6 @@ align-items:center;
 margin-bottom:20px;
 }
 
-.modal-header h3{
-font-size:20px;
-}
-
 .modal-actions button{
 padding:8px 14px;
 border:none;
@@ -135,12 +91,12 @@ margin-left:10px;
 }
 
 .decline-btn{
-background:var(--danger);
+background:#ef4444;
 color:white;
 }
 
 .cta-btn{
-background:var(--success);
+background:#16a34a;
 color:white;
 }
 
@@ -162,13 +118,11 @@ color:var(--soft);
 color:var(--accent);
 text-decoration:none;
 }
-
 </style>
-</head>
+{% endblock %}
 
-<body>
-
-<h2>📊 Lead Qualification</h2>
+{% block content %}
+<h2 style="margin-bottom:25px;">📊 Lead Qualification</h2>
 
 <div class="status-buttons">
 <button onclick="filterStatus('declined')">❌ Declined</button>
@@ -177,7 +131,6 @@ text-decoration:none;
 </div>
 
 <div class="grid">
-
 {% for c in companies %}
 <div class="card company-card"
      data-status="{{ c[11] if c[11] else 'explore' }}"
@@ -191,46 +144,34 @@ text-decoration:none;
         `{{c[6]|escape}}`,
         `{{c[7]|escape}}`
      )">
-
 <h3>{{ c[1] }}</h3>
 <p>{{ c[6] }}</p>
-
 </div>
 {% endfor %}
-
 </div>
-
-<!-- MODAL -->
 
 <div id="companyModal" class="modal">
 <div class="modal-content">
-
 <div class="close-btn" onclick="closeModal()">✖</div>
-
 <div class="modal-header">
 <h3 id="modalName"></h3>
-
 <div class="modal-actions">
 <button class="decline-btn" onclick="setStatus('declined')">Decline</button>
 <button class="cta-btn" onclick="setStatus('cta')">Call For Action</button>
 </div>
-
 </div>
-
 <div class="modal-details" id="modalDetails"></div>
-
 </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-
 let currentCompanyId = null;
 
 function openPopup(id,name,website,phone,address,rating,desc,email){
     currentCompanyId = id;
-
     document.getElementById("modalName").innerText = name;
-
     document.getElementById("modalDetails").innerHTML = `
         <p><strong>Description:</strong> ${desc || "-"}</p>
         <p><strong>Address:</strong> ${address || "-"}</p>
@@ -239,7 +180,6 @@ function openPopup(id,name,website,phone,address,rating,desc,email){
         <p><strong>Rating:</strong> ${rating || "-"}</p>
         ${website ? `<p><a href="${website}" target="_blank">Visit Website</a></p>` : ""}
     `;
-
     document.getElementById("companyModal").style.display="flex";
 }
 
@@ -261,30 +201,19 @@ function setStatus(status){
 
 function filterStatus(status){
     const cards = document.querySelectorAll(".company-card");
-
     cards.forEach(card=>{
         if(status==="explore"){
-            if(card.dataset.status==="explore"){
-                card.style.display="block";
-            } else {
-                card.style.display="none";
-            }
-        }
-        else if(card.dataset.status===status){
-            card.style.display="block";
+            card.style.display = (card.dataset.status==="explore") ? "block" : "none";
         } else {
-            card.style.display="none";
+            card.style.display = (card.dataset.status===status) ? "block" : "none";
         }
     });
 }
 
 window.onclick=function(e){
-if(e.target.classList.contains("modal")){
-closeModal();
+    if(e.target.classList.contains("modal")){
+        closeModal();
+    }
 }
-}
-
 </script>
-
-</body>
-</html>
+{% endblock %}
