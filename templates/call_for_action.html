@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Call For Action | LeadPilotGen6</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+body{
+background:#0f172a;
+color:white;
+font-family:'Inter',sans-serif;
+padding:40px;
+}
+
+h2{
+margin-bottom:24px;
+}
+
+.project-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+gap:24px;
+}
+
+.project-card{
+background:#1e293b;
+border-radius:16px;
+padding:20px;
+}
+
+.project-card h3{
+margin-bottom:8px;
+}
+
+.project-desc{
+color:#94a3b8;
+font-size:14px;
+margin-bottom:14px;
+}
+
+.company-list{
+display:grid;
+gap:12px;
+}
+
+.company-card{
+background:#111827;
+border-radius:12px;
+padding:12px;
+}
+
+.company-card h4{
+margin-bottom:6px;
+font-size:16px;
+}
+
+.muted{
+color:#94a3b8;
+font-size:13px;
+margin-bottom:4px;
+}
+
+a{
+color:#60a5fa;
+text-decoration:none;
+}
+
+.empty{
+color:#94a3b8;
+}
+</style>
+</head>
+<body>
+
+<h2>📞 Call For Action Companies</h2>
+
+{% if projects %}
+<div class="project-grid">
+{% for p in projects %}
+<div class="project-card">
+<h3>{{ p.title }}</h3>
+<p class="project-desc">{{ p.description or "No project description." }}</p>
+
+<div class="company-list">
+{% for c in p.companies %}
+<div class="company-card">
+<h4>{{ c.name }}</h4>
+{% if c.description %}<p class="muted">{{ c.description }}</p>{% endif %}
+{% if c.rating %}<p class="muted">⭐ {{ c.rating }}</p>{% endif %}
+{% if c.email %}<p class="muted">📧 {{ c.email }}</p>{% endif %}
+{% if c.phone %}<p class="muted">📞 {{ c.phone }}</p>{% endif %}
+{% if c.address %}<p class="muted">📍 {{ c.address }}</p>{% endif %}
+{% if c.website %}<p><a href="{{ c.website }}" target="_blank">Visit Website</a></p>{% endif %}
+</div>
+{% endfor %}
+</div>
+</div>
+{% endfor %}
+</div>
+{% else %}
+<p class="empty">No companies are marked as Call For Action yet. Open a project in Overview and mark companies as CTA.</p>
+{% endif %}
+
+</body>
+</html>

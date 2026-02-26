@@ -9,9 +9,14 @@ from groq import Groq # Added Groq import
 import os
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
-load_dotenv()  # Load environment variables from .env file
-UPLOAD_FOLDER = os.path.join("static", "project_logos")
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "leads.db")
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "project_logos")
+
+load_dotenv(os.path.join(BASE_DIR, ".env"))  # Always load env from project folder
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 app = Flask(__name__)
 app.secret_key = "tars_stable_system"
 
@@ -22,11 +27,14 @@ SERP_API_KEY = "702c63ae7215840ef169436872c89fcfb19913954d04015f015bb025eeaf1bf9
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=GROQ_API_KEY)
+def get_db_connection():
+    return sqlite3.connect(DB_PATH)
+
 # ===============================
 # DATABASE INIT (COMPANIES TABLE)
 # ===============================
 def init_db():
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     cur = conn.cursor()
 
     cur.execute("""
@@ -56,6 +64,12 @@ def init_db():
     except:
         pass
 
+    # Safely add chat_id column
+    try:
+        cur.execute("ALTER TABLE companies ADD COLUMN chat_id INTEGER")
+    except:
+        pass
+
     conn.commit()
     conn.close()
 
@@ -64,7 +78,7 @@ def init_db():
 # CHAT SYSTEM TABLES (NEW)
 # ===============================
 def init_chat_system():
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     cur = conn.cursor()
 
     cur.execute("""
@@ -246,14 +260,14 @@ def search_companies_maps(keyword, city):
 # DB OPS
 # ===============================
 def clear_companies(chat_id):
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     conn.execute("DELETE FROM companies WHERE chat_id = ?", (chat_id,))
     conn.commit()
     conn.close()
 
 def save_company(c, chat_id):
 
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     conn.execute("""
 INSERT INTO companies
 (name, website, phone, address, rating, description,
@@ -277,7 +291,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 
 
 def get_companies(chat_id):
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
 
     rows = conn.execute("""
     SELECT name, website, phone, address, rating, description,
@@ -357,7 +371,7 @@ def suggest_industries(description):
 # ===============================
 
 def create_chat(user, title):
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("INSERT INTO chats (user, title) VALUES (?, ?)", (user, title))
     chat_id = cur.lastrowid
@@ -367,7 +381,7 @@ def create_chat(user, title):
 
 
 def save_message(chat_id, role, content):
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     conn.execute(
         "INSERT INTO messages (chat_id, role, content) VALUES (?, ?, ?)",
         (chat_id, role, content)
@@ -377,7 +391,7 @@ def save_message(chat_id, role, content):
 
 
 def get_user_chats(user):
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     rows = conn.execute(
         "SELECT id, title FROM chats WHERE user=? ORDER BY id DESC",
         (user,)
@@ -387,7 +401,7 @@ def get_user_chats(user):
 
 
 def get_chat_messages(chat_id):
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     rows = conn.execute(
         "SELECT role, content, timestamp FROM messages WHERE chat_id=? ORDER BY id ASC",
         (chat_id,)
@@ -405,7 +419,7 @@ def industry_viewed():
     if "user" not in session:
         return redirect("/")
     
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     # Fetch projects and their associated companies
     # We join chats -> products -> companies
     data = conn.execute("""
@@ -538,7 +552,7 @@ def new_chat():
     chat_id = create_chat(session["user"], title)
 
     # 2️⃣ Save product entry
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     conn.execute(
         "INSERT INTO products (chat_id, product_name, description) VALUES (?, ?, ?)",
         (chat_id, title, description)
@@ -595,7 +609,7 @@ def send_message():
     save_message(chat_id, "assistant", ai_reply)
 
     # 5. Do NOT overwrite original project description
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     cur = conn.cursor()
 
     # Only insert if product doesn't exist (first time safety)
@@ -622,7 +636,7 @@ def delete_project(chat_id):
     if "user" not in session:
         return redirect("/")
 
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     cur = conn.cursor()
 
     # Delete related data first (to avoid orphan records)
@@ -642,9 +656,6 @@ def delete_project(chat_id):
     return "", 204
 
 
-
-
-   
 # ===============================
 # RUN TARGETING (FROM DASHBOARD BUTTON)
 # ===============================
@@ -709,7 +720,7 @@ def saved_projects():
     if "user" not in session:
         return redirect("/")
 
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     rows = conn.execute("""
         SELECT ch.id, ch.title, p.description
         FROM chats ch
@@ -742,7 +753,7 @@ def export_excel():
     chat_id = session.get("active_chat")
     companies = get_companies(chat_id)
 
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     title = conn.execute(
         "SELECT title FROM chats WHERE id=?",
         (chat_id,)
@@ -773,6 +784,48 @@ def export_excel():
     return Response(open(file_path, "rb"),
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": "attachment;filename=company_leads.xlsx"})
+
+@app.route("/call_for_action")
+def call_for_action():
+    if "user" not in session:
+        return redirect("/")
+
+    conn = get_db_connection()
+    rows = conn.execute("""
+        SELECT ch.id, ch.title, p.description
+        FROM chats ch
+        LEFT JOIN products p ON ch.id = p.chat_id
+        WHERE ch.user = ?
+        ORDER BY ch.id DESC
+    """, (session["user"],)).fetchall()
+
+    projects = []
+    for chat_id, title, description in rows:
+        company_rows = conn.execute("""
+            SELECT name, description, rating, email, phone, address, website
+            FROM companies
+            WHERE chat_id = ? AND status = 'cta'
+            ORDER BY id DESC
+        """, (chat_id,)).fetchall()
+
+        if company_rows:
+            projects.append({
+                "title": title,
+                "description": description,
+                "companies": [{
+                    "name": c[0],
+                    "description": c[1],
+                    "rating": c[2],
+                    "email": c[3],
+                    "phone": c[4],
+                    "address": c[5],
+                    "website": c[6]
+                } for c in company_rows]
+            })
+
+    conn.close()
+
+    return render_template("call_for_action.html", projects=projects)
 @app.route("/logout")
 def logout():
     session.clear()
@@ -783,7 +836,7 @@ def overview():
     if "user" not in session:
         return redirect("/")
 
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     rows = conn.execute("""
         SELECT ch.id, ch.title, p.description
         FROM chats ch
@@ -795,12 +848,13 @@ def overview():
 
     return render_template("overview.html", projects=rows, active_page="overview")
 
+
 @app.route("/overview_project/<int:chat_id>")
 def overview_project(chat_id):
     if "user" not in session:
         return redirect("/")
 
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
 
     companies = conn.execute("""
         SELECT id, name, website, phone, address, rating,
@@ -821,7 +875,7 @@ def update_status():
     company_id = request.form["company_id"]
     status = request.form["status"]
 
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     conn.execute(
         "UPDATE companies SET status=? WHERE id=?",
         (status, company_id)
@@ -833,3 +887,4 @@ def update_status():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
