@@ -137,22 +137,18 @@ a{
 color:var(--accent);
 text-decoration:none;
 }
-
+/* ACTIVE SIDEBAR LINK */
+.sidebar a.active{
+    background:var(--accent);
+    color:white !important;
+    font-weight:600;
+}
 </style>
 </head>
 
 <body>
 
-<div class="sidebar">
-<h2>🚀 LeadPilotGen6</h2>
-<a href="#"><i class="fas fa-chart-line"></i> Dashboard</a>
-<a href="/savedprojects"><i class="fas fa-folder"></i> Product</a>
-<a href="/chat"><i class="fas fa-robot"></i> AI Chat</a>
-<a href=""/overview""><i class="fas fa-robot"></i> Overview</a>
-<a href="/industry_viewed"><i class="fas fa-robot"></i> Industry Viewed</a>
-<a href="/export_excel"><i class="fas fa-file-excel"></i> Export Leads</a>
-<a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
-</div>
+{% include "sidebar.html" %}
 
 <div class="main">
 
