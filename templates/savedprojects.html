@@ -24,32 +24,38 @@ font-family:'Inter',sans-serif;
 
 body{
 display:flex;
+height:100vh;
 background:var(--bg);
 color:var(--text);
-min-height:100vh;
 }
 
 /* ================= SIDEBAR ================= */
+/* ================= SIDEBAR ================= */
 
 .sidebar{
-width:260px;
+width:240px;
 background:var(--card);
-padding:30px 20px;
+padding:25px 18px;
+height:100vh;
+position:fixed;
+left:0;
+top:0;
+display:flex;
+flex-direction:column;
+gap:8px;
 }
 
-.sidebar h2{
-margin-bottom:30px;
-}
+/* Sidebar Links */
 
 .sidebar a{
 display:flex;
 align-items:center;
-gap:10px;
-color:var(--soft);
-padding:12px;
-margin:10px 0;
-text-decoration:none;
+gap:12px;
+padding:12px 14px;
 border-radius:12px;
+text-decoration:none;
+color:var(--soft);
+font-size:14px;
 transition:0.3s;
 }
 
@@ -58,12 +64,20 @@ background:var(--accent);
 color:white;
 }
 
+/* Active Page Highlight */
+.sidebar a.active{
+background:var(--accent);
+color:white;
+font-weight:600;
+}
+
+
 /* ================= MAIN ================= */
 
 .main{
 flex:1;
 padding:40px;
-position:relative;
+margin-left:240px;   /* THIS pushes content beside sidebar */
 }
 
 /* HEADER */
@@ -235,18 +249,7 @@ cursor:pointer;
 
 <!-- ================= SIDEBAR ================= -->
 
-<div class="sidebar">
-<h2>🚀 LeadPilotGen6</h2>
-<a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
-<a href="/savedprojects"><i class="fas fa-folder"></i> Saved Projects</a>
-<a href="/chat"><i class="fas fa-robot"></i> AI Chat</a>
-<a href="/overview"><i class="fas fa-brain"></i> Overview</a>
-<a href="/call_for_action"><i class="fas fa-bullhorn"></i> Call For Action</a>
-<a href="/industry_viewed"><i class="fas fa-brain"></i> Industry Viewed</a>
-<a href="/export_excel"><i class="fas fa-file-excel"></i> Export Leads</a>
-<a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
-</div>
-
+{% include "sidebar.html" %}
 <!-- ================= MAIN ================= -->
 
 <div class="main">
