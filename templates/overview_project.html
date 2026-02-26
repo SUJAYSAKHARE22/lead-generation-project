@@ -176,6 +176,23 @@ text-decoration:none;
 <button onclick="filterStatus('explore')">🔍 More To Explore</button>
 </div>
 
+{% if product_name or product_description %}
+<div class="card" style="margin-bottom:18px;">
+    <h3 style="margin-bottom:8px;">Project: {{ product_name or '(no name)' }}</h3>
+    <p style="color:var(--soft);">{{ product_description or 'No description available.' }}</p>
+</div>
+{% endif %}
+
+{% if suggested_industry %}
+<div class="card" style="margin-bottom:18px;">
+    <p style="margin-top:10px;"><strong>Suggested industries:</strong>
+        {% for ind in suggested_industry %}
+            <span style="display:inline-block;background:var(--accent);color:white;padding:4px 8px;margin:2px;border-radius:8px;font-size:12px;">{{ ind }}</span>
+        {% endfor %}
+    </p>
+</div>
+{% endif %}
+
 <div class="grid">
 
 {% for c in companies %}
