@@ -2,6 +2,7 @@
 <html>
 <head>
 <title>LeadPilotGen6 AI Chat</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,6 +14,12 @@
 --text:white;
 --accent:#6366f1;
 --soft:#94a3b8;
+}
+
+html{
+font-size:16px;
+-webkit-text-size-adjust:100%;
+text-size-adjust:100%;
 }
 
 body.light{
@@ -41,13 +48,28 @@ transition:0.3s;
 /* SIDEBAR */
 
 .sidebar{
-width:240px;
+width:260px;
+min-width:260px;
+max-width:260px;
 background:var(--card);
-padding:25px 18px;
+padding:30px 20px;
 overflow-y:auto;
+scrollbar-gutter:stable;
 display:flex;
 flex-direction:column;
 gap:8px;
+}
+
+.main-sidebar{
+position:fixed;
+left:0;
+top:0;
+height:100vh;
+}
+
+.projects-sidebar{
+margin-left:260px;
+height:100vh;
 }
 
 /* Dashboard Sidebar Links */
@@ -55,13 +77,17 @@ gap:8px;
 .sidebar a{
 display:flex;
 align-items:center;
-gap:12px;
-padding:12px 14px;
+gap:10px;
+padding:12px;
+margin:10px 0;
 border-radius:12px;
 text-decoration:none;
 color:var(--soft);
-font-size:14px;
 transition:0.3s;
+}
+
+.sidebar a:visited{
+color:var(--soft);
 }
 
 .sidebar a:hover{
@@ -243,7 +269,7 @@ cursor:pointer;
 
 <!-- ================= DASHBOARD SIDEBAR ================= -->
 
-<div class="sidebar">
+<div class="sidebar main-sidebar">
 <h2>🚀 LeadPilotGen6</h2>
 <a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
 <a href="/savedprojects"><i class="fas fa-folder"></i> Product</a>
@@ -256,7 +282,7 @@ cursor:pointer;
 
 <!-- ================= AI CHAT SIDEBAR ================= -->
 
-<div class="sidebar" style="border-left:1px solid rgba(255,255,255,0.06); background:#111827;">
+<div class="sidebar projects-sidebar" style="border-left:1px solid rgba(255,255,255,0.06); background:#111827;">
 
 <h2>💬 Projects</h2>
 
