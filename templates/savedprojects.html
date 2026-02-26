@@ -4,6 +4,81 @@
 
 {% block extra_css %}
 <style>
+:root{
+--bg:#0f172a;
+--card:#1e293b;
+--text:white;
+--accent:#6366f1;
+--soft:#94a3b8;
+}
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter',sans-serif;
+}
+
+body{
+display:flex;
+height:100vh;
+background:var(--bg);
+color:var(--text);
+}
+
+/* ================= SIDEBAR ================= */
+/* ================= SIDEBAR ================= */
+
+.sidebar{
+width:240px;
+background:var(--card);
+padding:25px 18px;
+height:100vh;
+position:fixed;
+left:0;
+top:0;
+display:flex;
+flex-direction:column;
+gap:8px;
+}
+
+/* Sidebar Links */
+
+.sidebar a{
+display:flex;
+align-items:center;
+gap:12px;
+padding:12px 14px;
+border-radius:12px;
+text-decoration:none;
+color:var(--soft);
+font-size:14px;
+transition:0.3s;
+}
+
+.sidebar a:hover{
+background:var(--accent);
+color:white;
+}
+
+/* Active Page Highlight */
+.sidebar a.active{
+background:var(--accent);
+color:white;
+font-weight:600;
+}
+
+
+/* ================= MAIN ================= */
+
+.main{
+flex:1;
+padding:40px;
+margin-left:240px;   /* THIS pushes content beside sidebar */
+}
+
+/* HEADER */
+
 .header{
 display:flex;
 justify-content:space-between;
@@ -148,7 +223,16 @@ cursor:pointer;
 width:100%;
 }
 </style>
-{% endblock %}
+</head>
+
+<body>
+
+<!-- ================= SIDEBAR ================= -->
+
+{% include "sidebar.html" %}
+<!-- ================= MAIN ================= -->
+
+<div class="main">
 
 {% block content %}
 <div class="header">
@@ -161,8 +245,10 @@ width:100%;
 {% for chat in chats %}
 <div class="card">
 <div class="project-top">
-<img src="{{ url_for('static', filename='project_logos/' ~ chat[0] ~ '.png') }}"
-onerror="this.src='{{ url_for('static', filename='project_logos/default.png') }}'"
+<img
+src="{{ url_for('static', filename='project_logos/' ~ chat[0] ~ '.png') }}"
+data-fallback="{{ url_for('static', filename='project_logos/default.png') }}"
+onerror="this.src=this.dataset.fallback"
 class="project-logo">
 <div>
 <div class="title">{{ chat[1] }}</div>
@@ -186,7 +272,31 @@ class="project-logo">
 <label>Description</label>
 <input type="text" name="description" required>
 <label>Logo</label>
-<input type="file" name="logo">
+<input type="file" name="logo" id="modalLogoInput" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+	const logo = document.getElementById('modalLogoInput');
+	if(!logo) return;
+	logo.addEventListener('change', function(){
+		const f = this.files[0];
+		if(!f) return;
+		const allowed = ['image/png','image/jpeg'];
+		if(!allowed.includes(f.type)){
+			alert('Invalid file type. Please select a PNG or JPG image.');
+			this.value = '';
+			return;
+		}
+		const name = f.name.toLowerCase();
+		if(!name.endsWith('.png') && !name.endsWith('.jpg') && !name.endsWith('.jpeg')){
+			alert('Invalid file extension. Use .png, .jpg or .jpeg');
+			this.value = '';
+			return;
+		}
+	});
+});
+</script>
+
 <button type="submit">Create Project</button>
 </form>
 </div>
@@ -206,4 +316,6 @@ modal.style.display="none";
 }
 }
 </script>
-{% endblock %}
+
+</body>
+</html>
