@@ -15,48 +15,55 @@ font-family:Poppins;
 /* PAGE LAYOUT */
 body{
 display:flex;
-background:#f4f6f9;
-}
-
-/* LEFT SIDEBAR (FIXED NAV) */
-.sidebar{
-width:240px;
-height:100vh;
-background:#0f172a;
+background:#0f172a;   /* same as other pages */
 color:white;
-padding:25px;
-position:fixed;
-left:0;
-top:0;
 }
 
-/* Sidebar Title */
-.sidebar h1{
-margin-bottom:30px;
-font-size:22px;
+
+/* ===== SIDEBAR BASE STYLE (Required for include sidebar.html) ===== */
+
+.sidebar{
+    width:240px;
+    height:100vh;
+    background:#0f172a;
+    color:white;
+    padding:25px 18px;
+    position:fixed;
+    left:0;
+    top:0;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
 }
 
-/* Sidebar Links */
+.sidebar h2{
+    margin-bottom:20px;
+}
+
 .sidebar a{
-display:block;
-color:#cbd5e1;
-text-decoration:none;
-margin:12px 0;
-padding:10px;
-border-radius:6px;
-transition:0.2s;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 14px;
+    border-radius:12px;
+    text-decoration:none;
+    color:#94a3b8;
+    font-size:14px;
+    transition:0.3s;
 }
 
 .sidebar a:hover{
-background:#1e293b;
-color:white;
+    background:#6366f1;
+    color:white;
 }
+
 
 /* MAIN CONTENT AREA */
 .main{
-margin-left:240px;  /* pushes content beside sidebar */
 padding:30px;
-width:100%;
+margin-left:240px;   /* IMPORTANT → pushes content beside sidebar */
+width:calc(100% - 240px);
+flex:1;
 }
 
 /* KPI CARDS */
@@ -67,29 +74,24 @@ margin-bottom:25px;
 }
 
 .card{
-background:white;
-padding:20px;
-flex:1;
-border-radius:10px;
-box-shadow:0 4px 10px rgba(0,0,0,0.05);
-  }
+background:#1e293b;
+color:white;
+}
 
 /* TABLE */
 table{
 width:100%;
-background:white;
-border-radius:10px;
-border-collapse:collapse;
+background:#1e293b;
+color:white;
 }
 
 th,td{
 padding:14px;
 border-bottom:1px solid #eee;
 }
-
 th{
-background:#f1f5f9;
-text-align:left;
+background:#263244;
+color:#94a3b8;
 }
 
 /* BUTTON */
@@ -101,22 +103,18 @@ border:none;
 border-radius:6px;
 cursor:pointer;
 }
+.sidebar a.active{
+    background:#6366f1;   /* purple */
+    color:white !important;
+    font-weight:600;
+}
 </style>
 
 </head>
 
 <body>
 
-<div class="sidebar">
-div class="sidebar">
-<h1>LeadPilotGen6</h1>
-<a href="#">Dashboard</a>
-<a href="/export_excel">Export Leads</a>
-<a href="/savedprojects">Viewed saved projects</a>
-<a href="/chat">Return to Chat</a>
-
-<a href="/logout">Logout</a>
-</div>
+{% include "sidebar.html" %}
 
 <div class="main">
 
@@ -124,8 +122,7 @@ div class="sidebar">
 <h2>Lead Intelligence</h2>
 </div>
 
-<div style="background:white;padding:20px;margin-bottom:20px;border-radius:10px;
-box-shadow:0 4px 10px rgba(0,0,0,0.05);">
+<div style="background:#1e293b;padding:20px;margin-bottom:20px;border-radius:10px;"></div>
 
 <h3>Select Target Market</h3>
 

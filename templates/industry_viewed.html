@@ -1,70 +1,12 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Industry Analysis | LeadVerse</title>
+{% extends "base.html" %}
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+{% block title %}Industry Analysis | LeadVerse{% endblock %}
 
+{% block extra_css %}
 <style>
-:root{
---bg:#0f172a;
---card:#1e293b;
---text:white;
---accent:#6366f1;
---soft:#94a3b8;
-}
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Inter',sans-serif;
-}
-
-body{
-background:var(--bg);
-color:var(--text);
-padding:60px 20px;
-}
-
 .container{
-max-width:900px;
+max-width:1100px;
 margin:auto;
-}
-
-.back-btn{
-display:inline-block;
-margin-bottom:30px;
-color:var(--soft);
-text-decoration:none;
-transition:0.3s;
-}
-
-.back-btn:hover{
-color:var(--accent);
-}
-
-.analysis-card{
-background:var(--card);
-padding:50px;
-border-radius:25px;
-box-shadow:0 20px 50px rgba(0,0,0,0.4);
-transition:0.3s;
-}
-
-.analysis-card:hover{
-transform:translateY(-5px);
-}
-
-h2{
-margin-bottom:25px;
-font-size:26px;
-}
-
-.content{
-line-height:1.8;
-color:var(--soft);
-font-size:15px;
 }
 
 .grid{
@@ -103,39 +45,30 @@ padding-left:18px;
 color:var(--soft);
 }
 </style>
-</head>
+{% endblock %}
 
-<body>
-
+{% block content %}
 <div class="container">
+<h2 style="margin-bottom:18px;">Industry Analysis</h2>
 
-<a href="/chat" class="back-btn">← Back to Chat</a>
-
+{% if analysis and analysis is not string %}
 <div class="grid">
-
 {% for item in analysis %}
 <div class="card">
-
-<div class="card-title">
-{{ item.company }}
-</div>
-
-<div class="card-sub">
-Recommended Projects:
-</div>
-
+<div class="card-title">{{ item.company }}</div>
+<div class="card-sub">Recommended Projects:</div>
 <ul>
 {% for project in item.projects %}
 <li>{{ project }}</li>
 {% endfor %}
 </ul>
-
 </div>
 {% endfor %}
-
 </div>
-
+{% else %}
+<div class="card">
+<p style="color:var(--soft);">{{ analysis }}</p>
 </div>
-
-</body>
-</html>
+{% endif %}
+</div>
+{% endblock %}

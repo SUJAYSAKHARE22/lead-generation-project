@@ -1,22 +1,12 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Overview | LeadPilotGen6</title>
+{% extends "base.html" %}
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% block title %}Overview | LeadPilotGen6{% endblock %}
 
+{% block extra_css %}
 <style>
-body{
-background:#0f172a;
-color:white;
-font-family:'Inter',sans-serif;
-padding:40px;
-}
-
 .grid{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
 gap:25px;
 }
 
@@ -25,14 +15,41 @@ background:#1e293b;
 padding:20px;
 border-radius:16px;
 transition:0.3s;
+display:flex;
+flex-direction:column;
+gap:15px;
 }
 
 .card:hover{
 transform:translateY(-5px);
 }
 
+.project-header{
+display:flex;
+align-items:center;
+gap:15px;
+}
+
+.project-logo{
+width:50px;
+height:50px;
+border-radius:12px;
+object-fit:cover;
+}
+
+.project-info h3{
+margin:0;
+font-size:18px;
+}
+
+.project-info p{
+margin:4px 0 0;
+color:#94a3b8;
+font-size:14px;
+}
+
 button{
-margin-top:15px;
+margin-top:auto;
 padding:10px 16px;
 border:none;
 border-radius:10px;
@@ -41,18 +58,29 @@ color:white;
 cursor:pointer;
 }
 </style>
+{% endblock %}
 
-</head>
-
-<body>
-
-<h2>📊 Project Overview</h2>
+{% block content %}
+<h2 style="margin-bottom:24px;">📊 Project Overview</h2>
 
 <div class="grid">
 {% for p in projects %}
 <div class="card">
+
+<div class="project-header">
+
+{% set logo_path = 'project_logos/' ~ p[0] ~ '.png' %}
+
+<img src="{{ url_for('static', filename=logo_path) }}"
+     onerror="this.src='{{ url_for('static', filename='project_logos/default.png') }}'"
+     class="project-logo">
+
+<div class="project-info">
 <h3>{{ p[1] }}</h3>
 <p>{{ p[2] }}</p>
+</div>
+
+</div>
 
 <button onclick="location.href='/overview_project/{{p[0]}}'">
 Open →
@@ -61,6 +89,4 @@ Open →
 </div>
 {% endfor %}
 </div>
-
-</body>
-</html>
+{% endblock %}

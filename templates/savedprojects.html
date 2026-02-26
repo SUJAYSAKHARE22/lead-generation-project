@@ -1,11 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Saved Projects | LeadVerse</title>
+{% extends "base.html" %}
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% block title %}Saved Projects | LeadVerse{% endblock %}
 
+{% block extra_css %}
 <style>
 :root{
 --bg:#0f172a;
@@ -24,32 +21,38 @@ font-family:'Inter',sans-serif;
 
 body{
 display:flex;
+height:100vh;
 background:var(--bg);
 color:var(--text);
-min-height:100vh;
 }
 
 /* ================= SIDEBAR ================= */
+/* ================= SIDEBAR ================= */
 
 .sidebar{
-width:260px;
+width:240px;
 background:var(--card);
-padding:30px 20px;
+padding:25px 18px;
+height:100vh;
+position:fixed;
+left:0;
+top:0;
+display:flex;
+flex-direction:column;
+gap:8px;
 }
 
-.sidebar h2{
-margin-bottom:30px;
-}
+/* Sidebar Links */
 
 .sidebar a{
 display:flex;
 align-items:center;
-gap:10px;
-color:var(--soft);
-padding:12px;
-margin:10px 0;
-text-decoration:none;
+gap:12px;
+padding:12px 14px;
 border-radius:12px;
+text-decoration:none;
+color:var(--soft);
+font-size:14px;
 transition:0.3s;
 }
 
@@ -58,12 +61,20 @@ background:var(--accent);
 color:white;
 }
 
+/* Active Page Highlight */
+.sidebar a.active{
+background:var(--accent);
+color:white;
+font-weight:600;
+}
+
+
 /* ================= MAIN ================= */
 
 .main{
 flex:1;
 padding:40px;
-position:relative;
+margin-left:240px;   /* THIS pushes content beside sidebar */
 }
 
 /* HEADER */
@@ -78,8 +89,6 @@ margin-bottom:40px;
 .header h2{
 font-weight:600;
 }
-
-/* PLUS BUTTON */
 
 .add-btn{
 width:45px;
@@ -101,15 +110,11 @@ transform:scale(1.1);
 background:#4f46e5;
 }
 
-/* GRID */
-
 .grid{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
 gap:30px;
 }
-
-/* CARD */
 
 .card{
 background:var(--card);
@@ -167,8 +172,6 @@ background:#4f46e5;
 transform:scale(1.05);
 }
 
-/* ================= MODAL ================= */
-
 .modal{
 position:fixed;
 top:0;
@@ -219,15 +222,6 @@ color:white;
 cursor:pointer;
 width:100%;
 }
-
-.close{
-position:absolute;
-top:20px;
-right:30px;
-color:white;
-font-size:20px;
-cursor:pointer;
-}
 </style>
 </head>
 
@@ -240,6 +234,8 @@ cursor:pointer;
 <a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
 <a href="/savedprojects"><i class="fas fa-folder"></i> Saved Projects</a>
 <a href="/chat"><i class="fas fa-robot"></i> AI Chat</a>
+<a href="/overview"><i class="fas fa-brain"></i> Overview</a>
+<a href="/call_for_action"><i class="fas fa-bullhorn"></i> Call For Action</a>
 <a href="/industry_viewed"><i class="fas fa-brain"></i> Industry Viewed</a>
 <a href="/export_excel"><i class="fas fa-file-excel"></i> Export Leads</a>
 <a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -249,62 +245,41 @@ cursor:pointer;
 
 <div class="main">
 
+{% block content %}
 <div class="header">
 <h2>📁 Saved Projects</h2>
-
-<button class="add-btn" onclick="openModal()">
-<i class="fas fa-plus"></i>
-</button>
+<button class="add-btn" onclick="openModal()"><i class="fas fa-plus"></i></button>
 </div>
 
 {% if chats %}
 <div class="grid">
-
 {% for chat in chats %}
 <div class="card">
-
 <div class="project-top">
-<img
-src="{{ url_for('static', filename='project_logos/' ~ chat[0] ~ '.png') }}"
-data-fallback="{{ url_for('static', filename='project_logos/default.png') }}"
-onerror="this.src=this.dataset.fallback"
+<img src="{{ url_for('static', filename='project_logos/' ~ chat[0] ~ '.png') }}"
+onerror="this.src='{{ url_for('static', filename='project_logos/default.png') }}'"
 class="project-logo">
-
 <div>
 <div class="title">{{ chat[1] }}</div>
 <div class="description">{{ chat[2] or "No description available." }}</div>
 </div>
 </div>
-
-<button class="show-btn"
-onclick="location.href='/open_project/{{chat[0]}}'">
-Show Companies →
-</button>
-
+<button class="show-btn" onclick="location.href='/open_project/{{chat[0]}}'">Show Companies →</button>
 </div>
 {% endfor %}
-
 </div>
 {% else %}
 <p style="color:var(--soft);margin-top:50px;">No saved projects yet.</p>
 {% endif %}
 
-</div>
-
-<!-- ================= POPUP MODAL ================= -->
-
 <div class="modal" id="projectModal">
 <div class="modal-content">
 <h3>Create New Project</h3>
-
 <form action="/new_chat" method="POST" enctype="multipart/form-data">
-
 <label>Project Name</label>
 <input type="text" name="title" required>
-
 <label>Description</label>
 <input type="text" name="description" required>
-
 <label>Logo</label>
 <input type="file" name="logo" id="modalLogoInput" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
 
@@ -332,11 +307,12 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 
 <button type="submit">Create Project</button>
-
 </form>
 </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
 function openModal(){
 document.getElementById("projectModal").style.display="flex";
