@@ -20,7 +20,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app = Flask(__name__)
 app.secret_key = "tars_stable_system"
 
-SERP_API_KEY = "b6eee82776bb954560718c2bce860251638c2cc5dce73e44a2bc4868a5494fcc"
+SERP_API_KEY = "d35d3c85d44e533fa0e77b001b6a026d6f30ea62c6a7be49bac59d071d7637d2"
 
 
 # Initialize Groq Client
@@ -485,7 +485,7 @@ def generate_sales_ai_reply(chat_id, user_message):
 
 def get_product_info(chat_id):
     """Return (product_name, description, industry_suggestions_json) for a chat if present."""
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     row = conn.execute(
         "SELECT product_name, description, industry_suggestions FROM products WHERE chat_id=?",
         (chat_id,)
@@ -500,7 +500,7 @@ def upsert_product(chat_id, product_name=None, description=None, industry_sugges
     """Update the products row for chat_id if exists, otherwise insert one.
     Only non-None fields are updated.  industry_suggestions should be JSON text.
     """
-    conn = sqlite3.connect("leads.db")
+    conn = get_db_connection()
     cur = conn.cursor()
 
     existing = cur.execute(
@@ -714,7 +714,8 @@ def industry_viewed():
         else:
             analysis_data = []
     except Exception as e:
-        analysis_result = f"Error generating analysis: {str(e)}"
+        analysis_data = []
+        print(f"Industry analysis error: {e}")
 
     return render_template("industry_viewed.html", analysis=analysis_data, active_page="industry")
 
@@ -797,7 +798,7 @@ def new_chat():
         if ext not in allowed_ext or mime not in allowed_mimes:
             # rollback product/chat created earlier to avoid orphan rows
             try:
-                conn = sqlite3.connect("leads.db")
+                conn = get_db_connection()
                 cur = conn.cursor()
                 cur.execute("DELETE FROM products WHERE chat_id=?", (chat_id,))
                 cur.execute("DELETE FROM chats WHERE id=?", (chat_id,))
@@ -834,7 +835,6 @@ def chat_session(chat_id):
     )
 
 
-@app.route("/send_message", methods=["POST"])
 @app.route("/send_message", methods=["POST"])
 def send_message():
     chat_id = request.form["chat_id"]
@@ -1002,11 +1002,10 @@ def run_targeting():
     clear_companies(chat_id)
 
     for ind in selected_industries:
-     search_keyword = map_industry_to_search(ind)
-    companies = search_companies_maps(search_keyword, city)
-
-    for c in companies:
-        save_company(c, chat_id)   # pass chat_id here
+        search_keyword = map_industry_to_search(ind)
+        companies = search_companies_maps(search_keyword, city)
+        for c in companies:
+            save_company(c, chat_id)
 
     session["selected_city"] = city
     session["suggested_industry"] = selected_industries
@@ -1089,14 +1088,22 @@ def export_excel():
         return redirect("/")
 
     chat_id = session.get("active_chat")
+    if not chat_id:
+        return redirect("/dashboard")
+
     companies = get_companies(chat_id)
 
     conn = get_db_connection()
-    title = conn.execute(
+    row = conn.execute(
         "SELECT title FROM chats WHERE id=?",
         (chat_id,)
-    ).fetchone()[0]
+    ).fetchone()
     conn.close()
+
+    if not row:
+        return redirect("/dashboard")
+
+    title = row[0]
 
     file_path = "company_leads.xlsx"
 
@@ -1239,4 +1246,3 @@ def update_status():
 
 if __name__ == "__main__":
     app.run(debug=True)
-

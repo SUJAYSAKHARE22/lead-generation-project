@@ -365,11 +365,6 @@ body.light .sidebar[style*="#111827"]{
 {% set logo_path = 'project_logos/' ~ chat[0] ~ '.png' %}
 {% set logo_url = url_for('static', filename=logo_path) %}
 {% set default_logo = url_for('static', filename='project_logos/default.png') %}
-{% set chat_url = url_for('chat_session', chat_id=chat[0]) %}
-
-<div class="chat-item"
-     onclick="location.href='{{ chat_url }}'"
-     oncontextmenu="showMenu(event, '{{ chat[0] }}')">
 
 <img src="{{ logo_url }}"
     onerror="this.onerror=null;this.src='{{ default_logo }}';"

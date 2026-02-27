@@ -1,157 +1,140 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>LeadPilot Dashboard</title>
+{% extends "base.html" %}
 
-{% block title %}LeadVerse Dashboard{% endblock %}
+{% block title %}Dashboard | LeadPilotGen6{% endblock %}
 
 {% block extra_css %}
 <style>
 .top{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
 }
 
 .search-box{
-background:var(--card);
-padding:25px;
-border-radius:20px;
-margin-bottom:30px;
+    background:var(--card);
+    padding:25px;
+    border-radius:20px;
+    margin-bottom:30px;
 }
 
-select,input{
-width:100%;
-padding:12px;
-border-radius:12px;
-border:none;
-background:rgba(255,255,255,0.05);
-color:var(--text);
-margin-top:10px;
+.search-box select,
+.search-box input{
+    width:100%;
+    padding:12px;
+    border-radius:12px;
+    border:none;
+    background:rgba(255,255,255,0.05);
+    color:var(--text);
+    margin-top:10px;
 }
 
-button{
-margin-top:15px;
-padding:12px 20px;
-border-radius:12px;
-border:none;
-background:var(--accent);
-color:white;
-cursor:pointer;
+.search-box button{
+    margin-top:15px;
+    padding:12px 20px;
+    border-radius:12px;
+    border:none;
+    background:var(--accent);
+    color:white;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.search-box button:hover{
+    background:#4f46e5;
 }
 
 .grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
-gap:25px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:25px;
 }
 
 .card{
-background:var(--card);
-padding:20px;
-border-radius:18px;
-transition:0.3s;
+    background:var(--card);
+    padding:20px;
+    border-radius:18px;
+    transition:0.3s;
 }
 
 .card:hover{
-transform:translateY(-5px);
+    transform:translateY(-5px);
 }
 
 .rating{
-background:#16a34a;
-padding:4px 10px;
-border-radius:12px;
-font-size:12px;
-display:inline-block;
-margin-top:5px;
+    background:#16a34a;
+    padding:4px 10px;
+    border-radius:12px;
+    font-size:12px;
+    display:inline-block;
+    margin-top:5px;
 }
 
-.grid a{
-color:var(--accent);
-text-decoration:none;
+.card a{
+    color:var(--accent);
+    text-decoration:none;
 }
-/* ACTIVE SIDEBAR LINK */
+
 .sidebar a.active{
     background:var(--accent);
     color:white !important;
     font-weight:600;
 }
 </style>
-</head>
-
-<body>
-
-<div class="sidebar">
-<h2>🚀 LeadPilotGen6</h2>
-<a href="#"><i class="fas fa-chart-line"></i> Dashboard</a>
-<a href="/savedprojects"><i class="fas fa-folder"></i> Product</a>
-<a href="/chat"><i class="fas fa-robot"></i> AI Chat</a>
-<a href="/overview"><i class="fas fa-robot"></i> Overview</a>
-<a href="/call_for_action"><i class="fas fa-bullhorn"></i> Call For Action</a>
-<a href="/industry_viewed"><i class="fas fa-robot"></i> Industry Viewed</a>
-<a href="/export_excel"><i class="fas fa-file-excel"></i> Export Leads</a>
-<a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
-</div>
-
-<div class="main">
+{% endblock %}
 
 {% block content %}
 <div class="top">
-<h2>Lead Intelligence</h2>
+    <h2>Lead Intelligence</h2>
 </div>
 
 <form action="/run_targeting" method="POST" class="search-box">
 
-{% if suggested_industry %}
-<p style="margin-bottom:10px;">
-<strong>Suggested industries:</strong>
-{% for ind in suggested_industry %}
-<span style="display:inline-block;background:var(--accent);color:white;padding:4px 8px;margin:2px;border-radius:8px;font-size:12px;">{{ ind }}</span>
-{% endfor %}
-</p>
-{% endif %}
+    {% if suggested_industry %}
+    <p style="margin-bottom:10px;">
+        <strong>Suggested industries:</strong>
+        {% for ind in suggested_industry %}
+        <span style="display:inline-block;background:var(--accent);color:white;padding:4px 8px;margin:2px;border-radius:8px;font-size:12px;">{{ ind }}</span>
+        {% endfor %}
+    </p>
+    {% endif %}
 
-<label>Select Industries</label>
-<select name="industry[]" multiple style="height:120px;">
-{% for ind in suggested_industry %}
-<option value="{{ ind }}" selected>{{ ind }}</option>
-{% endfor %}
-</select>
+    <label>Select Industries</label>
+    <select name="industry[]" multiple style="height:120px;">
+        {% for ind in suggested_industry %}
+        <option value="{{ ind }}" selected>{{ ind }}</option>
+        {% endfor %}
+    </select>
 
-<label>City</label>
-<input name="city" value="{{ city }}" required>
+    <label>City</label>
+    <input name="city" value="{{ city }}" required>
 
-<button type="submit">Find Companies</button>
+    <button type="submit">Find Companies</button>
 </form>
 
 <div class="grid">
-{% for c in companies %}
-<div class="card">
-<h3>{{ c.name }}</h3>
+    {% for c in companies %}
+    <div class="card">
+        <h3>{{ c.name }}</h3>
 
-{% if c.rating %}
-<div class="rating">⭐ {{ c.rating }}</div>
-{% endif %}
+        {% if c.rating %}
+        <div class="rating">⭐ {{ c.rating }}</div>
+        {% endif %}
 
-<p style="color:var(--soft);margin-top:10px;">{{ c.description }}</p>
-<p>📍 {{ c.address }}</p>
+        <p style="color:var(--soft);margin-top:10px;">{{ c.description }}</p>
+        <p>📍 {{ c.address }}</p>
 
-{% if c.email %}<p>📧 {{ c.email }}</p>{% endif %}
-{% if c.phone %}<p>📞 {{ c.phone }}</p>{% endif %}
+        {% if c.email %}<p>📧 {{ c.email }}</p>{% endif %}
+        {% if c.phone %}<p>📞 {{ c.phone }}</p>{% endif %}
 
-{% if c.website %}
-<p><a href="{{ c.website }}" target="_blank">🌐 Website</a></p>
-{% endif %}
+        {% if c.website %}
+        <p><a href="{{ c.website }}" target="_blank">🌐 Website</a></p>
+        {% endif %}
 
-{% if c.company_linkedin %}
-<p><a href="{{ c.company_linkedin }}" target="_blank">🏢 Company LinkedIn</a></p>
-{% endif %}
+        {% if c.company_linkedin %}
+        <p><a href="{{ c.company_linkedin }}" target="_blank">🏢 Company LinkedIn</a></p>
+        {% endif %}
+    </div>
+    {% endfor %}
 </div>
-{% endfor %}
-</div>
-
-</div>
-
-</body>
-</html>
+{% endblock %}

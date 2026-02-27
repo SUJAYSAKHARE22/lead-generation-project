@@ -4,327 +4,227 @@
 
 {% block extra_css %}
 <style>
-:root{
---bg:#0f172a;
---card:#1e293b;
---text:white;
---accent:#6366f1;
---soft:#94a3b8;
-}
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Inter',sans-serif;
-}
-
-body{
-display:flex;
-height:100vh;
-background:var(--bg);
-color:var(--text);
-}
-
-/* ================= SIDEBAR ================= */
-/* ================= SIDEBAR ================= */
-
-.sidebar{
-width:240px;
-background:var(--card);
-padding:25px 18px;
-height:100vh;
-position:fixed;
-left:0;
-top:0;
-display:flex;
-flex-direction:column;
-gap:8px;
-}
-
-/* Sidebar Links */
-
-.sidebar a{
-display:flex;
-align-items:center;
-gap:12px;
-padding:12px 14px;
-border-radius:12px;
-text-decoration:none;
-color:var(--soft);
-font-size:14px;
-transition:0.3s;
-}
-
-.sidebar a:hover{
-background:var(--accent);
-color:white;
-}
-
-/* Active Page Highlight */
-.sidebar a.active{
-background:var(--accent);
-color:white;
-font-weight:600;
-}
-
-
-/* ================= MAIN ================= */
-
-.main{
-flex:1;
-padding:40px;
-margin-left:240px;   /* THIS pushes content beside sidebar */
-}
-
-/* HEADER */
-
 .header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:40px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:40px;
 }
 
 .header h2{
-font-weight:600;
+    font-weight:600;
 }
 
 .add-btn{
-width:45px;
-height:45px;
-border-radius:50%;
-border:none;
-background:var(--accent);
-color:white;
-font-size:22px;
-cursor:pointer;
-display:flex;
-align-items:center;
-justify-content:center;
-transition:0.3s;
+    width:45px;
+    height:45px;
+    border-radius:50%;
+    border:none;
+    background:var(--accent);
+    color:white;
+    font-size:22px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:0.3s;
 }
 
 .add-btn:hover{
-transform:scale(1.1);
-background:#4f46e5;
+    transform:scale(1.1);
+    background:#4f46e5;
 }
 
 .grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-gap:30px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:30px;
 }
 
 .card{
-background:var(--card);
-padding:25px;
-border-radius:20px;
-transition:0.3s;
-box-shadow:0 15px 40px rgba(0,0,0,0.4);
-display:flex;
-flex-direction:column;
-justify-content:space-between;
+    background:var(--card);
+    padding:25px;
+    border-radius:20px;
+    transition:0.3s;
+    box-shadow:0 15px 40px rgba(0,0,0,0.4);
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
 }
 
 .card:hover{
-transform:translateY(-6px);
+    transform:translateY(-6px);
 }
 
 .project-top{
-display:flex;
-gap:15px;
-margin-bottom:20px;
+    display:flex;
+    gap:15px;
+    margin-bottom:20px;
 }
 
 .project-logo{
-width:60px;
-height:60px;
-border-radius:12px;
-object-fit:cover;
-background:#111827;
+    width:60px;
+    height:60px;
+    border-radius:12px;
+    object-fit:cover;
+    background:#111827;
 }
 
 .title{
-font-size:18px;
-font-weight:600;
-margin-bottom:6px;
+    font-size:18px;
+    font-weight:600;
+    margin-bottom:6px;
 }
 
 .description{
-color:var(--soft);
-font-size:14px;
+    color:var(--soft);
+    font-size:14px;
 }
 
 .show-btn{
-padding:12px 18px;
-background:var(--accent);
-border:none;
-border-radius:12px;
-color:white;
-cursor:pointer;
-font-weight:600;
-transition:0.3s;
+    padding:12px 18px;
+    background:var(--accent);
+    border:none;
+    border-radius:12px;
+    color:white;
+    cursor:pointer;
+    font-weight:600;
+    transition:0.3s;
 }
 
 .show-btn:hover{
-background:#4f46e5;
-transform:scale(1.05);
+    background:#4f46e5;
+    transform:scale(1.05);
 }
 
 .modal{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.6);
-display:none;
-align-items:center;
-justify-content:center;
-z-index:999;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.6);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:999;
 }
 
 .modal-content{
-background:var(--card);
-padding:30px;
-border-radius:20px;
-width:400px;
+    background:var(--card);
+    padding:30px;
+    border-radius:20px;
+    width:400px;
 }
 
 .modal-content h3{
-margin-bottom:20px;
+    margin-bottom:20px;
 }
 
 .modal-content label{
-display:block;
-margin-top:15px;
-font-size:14px;
+    display:block;
+    margin-top:15px;
+    font-size:14px;
 }
 
 .modal-content input{
-width:100%;
-padding:12px;
-margin-top:8px;
-border-radius:12px;
-border:none;
-background:rgba(255,255,255,0.05);
-color:var(--text);
+    width:100%;
+    padding:12px;
+    margin-top:8px;
+    border-radius:12px;
+    border:none;
+    background:rgba(255,255,255,0.05);
+    color:var(--text);
 }
 
 .modal-content button{
-margin-top:20px;
-background:var(--accent);
-border:none;
-padding:12px 20px;
-border-radius:12px;
-color:white;
-cursor:pointer;
-width:100%;
+    margin-top:20px;
+    background:var(--accent);
+    border:none;
+    padding:12px 20px;
+    border-radius:12px;
+    color:white;
+    cursor:pointer;
+    width:100%;
 }
 </style>
-</head>
-
-<body>
-
-<!-- ================= SIDEBAR ================= -->
-
-<div class="sidebar">
-<h2>🚀 LeadPilotGen6</h2>
-<a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
-<a href="/savedprojects"><i class="fas fa-folder"></i> Saved Projects</a>
-<a href="/chat"><i class="fas fa-robot"></i> AI Chat</a>
-<a href="/overview"><i class="fas fa-brain"></i> Overview</a>
-<a href="/call_for_action"><i class="fas fa-bullhorn"></i> Call For Action</a>
-<a href="/industry_viewed"><i class="fas fa-brain"></i> Industry Viewed</a>
-<a href="/export_excel"><i class="fas fa-file-excel"></i> Export Leads</a>
-<a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
-</div>
-
-<!-- ================= MAIN ================= -->
-
-<div class="main">
+{% endblock %}
 
 {% block content %}
 <div class="header">
-<h2>📁 Saved Projects</h2>
-<button class="add-btn" onclick="openModal()"><i class="fas fa-plus"></i></button>
+    <h2>📁 Saved Projects</h2>
+    <button class="add-btn" onclick="openModal()"><i class="fas fa-plus"></i></button>
 </div>
 
 {% if chats %}
 <div class="grid">
-{% for chat in chats %}
-<div class="card">
-<div class="project-top">
-<img src="{{ url_for('static', filename='project_logos/' ~ chat[0] ~ '.png') }}"
-onerror="this.src='{{ url_for('static', filename='project_logos/default.png') }}'"
-class="project-logo">
-<div>
-<div class="title">{{ chat[1] }}</div>
-<div class="description">{{ chat[2] or "No description available." }}</div>
-</div>
-</div>
-<button class="show-btn" onclick="location.href='/open_project/{{chat[0]}}'">Show Companies →</button>
-</div>
-{% endfor %}
+    {% for chat in chats %}
+    <div class="card">
+        <div class="project-top">
+            <img src="{{ url_for('static', filename='project_logos/' ~ chat[0] ~ '.png') }}"
+                 onerror="this.src='{{ url_for('static', filename='project_logos/default.png') }}'"
+                 class="project-logo">
+            <div>
+                <div class="title">{{ chat[1] }}</div>
+                <div class="description">{{ chat[2] or "No description available." }}</div>
+            </div>
+        </div>
+        <button class="show-btn" onclick="location.href='/open_project/{{chat[0]}}'">Show Companies →</button>
+    </div>
+    {% endfor %}
 </div>
 {% else %}
 <p style="color:var(--soft);margin-top:50px;">No saved projects yet.</p>
 {% endif %}
 
 <div class="modal" id="projectModal">
-<div class="modal-content">
-<h3>Create New Project</h3>
-<form action="/new_chat" method="POST" enctype="multipart/form-data">
-<label>Project Name</label>
-<input type="text" name="title" required>
-<label>Description</label>
-<input type="text" name="description" required>
-<label>Logo</label>
-<input type="file" name="logo" id="modalLogoInput" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
-
-<script>
-document.addEventListener('DOMContentLoaded', function(){
-	const logo = document.getElementById('modalLogoInput');
-	if(!logo) return;
-	logo.addEventListener('change', function(){
-		const f = this.files[0];
-		if(!f) return;
-		const allowed = ['image/png','image/jpeg'];
-		if(!allowed.includes(f.type)){
-			alert('Invalid file type. Please select a PNG or JPG image.');
-			this.value = '';
-			return;
-		}
-		const name = f.name.toLowerCase();
-		if(!name.endsWith('.png') && !name.endsWith('.jpg') && !name.endsWith('.jpeg')){
-			alert('Invalid file extension. Use .png, .jpg or .jpeg');
-			this.value = '';
-			return;
-		}
-	});
-});
-</script>
-
-<button type="submit">Create Project</button>
-</form>
-</div>
+    <div class="modal-content">
+        <h3>Create New Project</h3>
+        <form action="/new_chat" method="POST" enctype="multipart/form-data">
+            <label>Project Name</label>
+            <input type="text" name="title" required>
+            <label>Description</label>
+            <input type="text" name="description" required>
+            <label>Logo</label>
+            <input type="file" name="logo" id="modalLogoInput" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
+            <button type="submit">Create Project</button>
+        </form>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+document.addEventListener('DOMContentLoaded', function(){
+    const logo = document.getElementById('modalLogoInput');
+    if(!logo) return;
+    logo.addEventListener('change', function(){
+        const f = this.files[0];
+        if(!f) return;
+        const allowed = ['image/png','image/jpeg'];
+        if(!allowed.includes(f.type)){
+            alert('Invalid file type. Please select a PNG or JPG image.');
+            this.value = '';
+            return;
+        }
+        const name = f.name.toLowerCase();
+        if(!name.endsWith('.png') && !name.endsWith('.jpg') && !name.endsWith('.jpeg')){
+            alert('Invalid file extension. Use .png, .jpg or .jpeg');
+            this.value = '';
+            return;
+        }
+    });
+});
+
 function openModal(){
-document.getElementById("projectModal").style.display="flex";
+    document.getElementById("projectModal").style.display = "flex";
 }
 
-window.onclick=function(e){
-const modal=document.getElementById("projectModal");
-if(e.target==modal){
-modal.style.display="none";
-}
+window.onclick = function(e){
+    const modal = document.getElementById("projectModal");
+    if(e.target == modal){
+        modal.style.display = "none";
+    }
 }
 </script>
-
-</body>
-</html>
+{% endblock %}
