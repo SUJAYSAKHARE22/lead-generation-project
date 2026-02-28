@@ -3,12 +3,13 @@ import requests
 import re
 import json # Added for parsing JSON from LLM
 from bs4 import BeautifulSoup
-from flask import Flask, render_template, request, redirect, session, Response
+from flask import Flask, render_template, request, redirect, session, Response, jsonify
 from openpyxl import Workbook
 from groq import Groq # Added Groq import
 import os
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
+from ai_agent import generate_newsletter_draft
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "leads.db")
@@ -1243,6 +1244,25 @@ def update_status():
     conn.close()
 
     return "", 204
+
+@app.route("/generate_newsletter", methods=["POST"])
+def generate_newsletter():
+    if "user" not in session:
+        return {"error": "Unauthorized"}, 403
+
+    project_title = request.form["project_title"]
+    project_description = request.form["project_description"]
+    company_name = request.form["company_name"]
+    company_description = request.form.get("company_description", "")
+
+    result = generate_newsletter_draft(
+        project_title,
+        project_description,
+        company_name,
+        company_description
+    )
+
+    return jsonify(result)
 
 if __name__ == "__main__":
     app.run(debug=True)
