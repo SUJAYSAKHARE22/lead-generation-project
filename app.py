@@ -22,7 +22,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app = Flask(__name__)
 app.secret_key = "tars_stable_system"
 
-SERP_API_KEY = "d35d3c85d44e533fa0e77b001b6a026d6f30ea62c6a7be49bac59d071d7637d2"
+SERP_API_KEY = ""
 
 
 # Initialize Groq Client
@@ -208,18 +208,7 @@ def find_company_and_hr_linkedin(company_name):
 # GOOGLE MAPS SEARCH
 # ===============================
 def map_industry_to_search(industry):
-    mapping = {
-        "Industrial IoT": "automation companies",
-        "Manufacturing": "manufacturing companies",
-        "IT Services": "software companies",
-        "Engineering Services": "engineering firms",
-        "Energy": "energy companies",
-        "Logistics": "logistics companies",
-        "Healthcare": "hospitals",
-        "Retail": "retail companies"
-    }
-
-    return mapping.get(industry, industry)
+    return f"{industry}"
 
 def search_companies_maps(keyword, city):
     params = {
@@ -340,21 +329,20 @@ def suggest_industries(description):
     based on the user's product description.
     """
     try:
-        # Define the available mapping keys to ensure LLM stays within bounds
-        valid_industries = [
-            "Industrial IoT", "Manufacturing", "IT Services", 
-            "Engineering Services", "Energy", "Logistics", 
-            "Healthcare", "Retail", "HR Tech", "Education", 
-            "Security Solutions", "Government & Public Sector"
-        ]
+        
 
         prompt = f"""
-        Analyze the following product/company description and identify the most relevant industries.
-        Description: "{description}"
+        Analyze the following product or service description and identify the most relevant target industries.
 
-        Return ONLY a Python-style list of industries from this specific set: {valid_industries}.
-        If none fit perfectly, pick the closest match or "General Business".
-        Respond with ONLY the list, e.g., ["IT Services", "Manufacturing"].
+        Description:
+        "{description}"
+
+        Return ONLY a Python-style list of 3-6 industry names that would be ideal target markets.
+
+        Example format:
+        ["Healthcare", "FinTech", "Logistics"]
+
+        Do not explain. Do not add commentary. Only return the list.
         """
 
         completion = client.chat.completions.create(
@@ -567,34 +555,31 @@ def user_requests_industry_suggestions(msg):
 
 
 def extract_industries_from_text(text):
-    """Look for industry names in an assistant reply.
-
-    Checks numbered or bulleted lines and also scans for known industry
-    keywords. This allows us to capture the exact list the AI provided (for
-    example the six-item list in the user’s attachment).
+    """
+    Extract industries ONLY from properly formatted list items
+    (numbered or bullet style). Do NOT extract capitalized phrases
+    to avoid capturing project names.
     """
     industries = []
+
     for line in text.splitlines():
         line = line.strip()
-        # remove markdown bolding
         clean = line.replace("**", "").replace("*", "")
-        # look for numbered or bulleted entries ending with a colon
+
+        # Match numbered or bulleted items ending with colon
         m = re.match(r'^(?:\d+\.|[-*•])\s*([^:]+):', clean)
         if m:
             industries.append(m.group(1).strip())
-    # if we found nothing via bullets, fall back to capitalized phrases
-    if not industries:
-        caps = re.findall(r"\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)+)\b", text)
-        for cap in caps:
-            industries.append(cap)
-    # deduplicate preserving order
+
+    # Deduplicate while preserving order
     seen = set()
-    out = []
+    result = []
     for ind in industries:
         if ind not in seen:
             seen.add(ind)
-            out.append(ind)
-    return out
+            result.append(ind)
+
+    return result
 
 def create_chat(user, title):
     conn = get_db_connection()
