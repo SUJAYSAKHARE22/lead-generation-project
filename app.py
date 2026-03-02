@@ -21,8 +21,36 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app = Flask(__name__)
 app.secret_key = "tars_stable_system"
 
-SERP_API_KEY = "d35d3c85d44e533fa0e77b001b6a026d6f30ea62c6a7be49bac59d071d7637d2"
+SERP_API_KEY = "702c63ae7215840ef169436872c89fcfb19913954d04015f015bb025eeaf1bf9"
 
+@app.context_processor
+def inject_active_page():
+    from flask import request
+    path = request.path.lower()
+
+    if path.startswith("/dashboard"):
+        active = "dashboard"
+
+    elif path.startswith("/chat") or path.startswith("/chat_session"):
+        # 👈 THIS LINE FIXES AI Chat highlight
+        active = "chat"
+
+    elif path.startswith("/overview"):
+        active = "overview"
+
+    elif path.startswith("/savedprojects"):
+        active = "product"
+
+    elif path.startswith("/call_for_action"):
+        active = "cta"
+
+    elif path.startswith("/industry_viewed"):
+        active = "industry"
+
+    else:
+        active = ""
+
+    return dict(active_page=active)
 
 # Initialize Groq Client
 
@@ -662,7 +690,11 @@ def industry_viewed():
     conn.close()
 
     if not data:
-        return render_template("industry_viewed.html", analysis="No leads or projects found to analyze yet.")
+        return render_template(
+    "industry_viewed.html",
+    analysis="No leads or projects found to analyze yet.",
+    active_page="industry"
+)
 
     # Organize data for the LLM
     structured_context = {}
@@ -763,7 +795,8 @@ def create_project_page():
     return render_template(
         "chat.html",
         chats=chats,
-        show_create=True
+        show_create=True,
+        active_page="chat"
     )
 
 @app.route("/new_chat", methods=["POST"])
@@ -832,7 +865,8 @@ def chat_session(chat_id):
         messages=messages,
         chats=chats,
         active_chat=chat_id,
-        show_create=False   # 👈 Important
+        show_create=False,
+        active_page="chat"
     )
 
 
@@ -1171,7 +1205,11 @@ def call_for_action():
 
     conn.close()
 
-    return render_template("call_for_action.html", projects=projects)
+    return render_template(
+    "call_for_action.html",
+    projects=projects,
+    active_page="cta"
+)
 @app.route("/logout")
 def logout():
     session.clear()
@@ -1227,7 +1265,8 @@ def overview_project(chat_id):
         chat_id=chat_id,
         product_name=pname,
         product_description=pdesc,
-        suggested_industry=suggested
+        suggested_industry=suggested,
+        active_page="overview"
     )
 
 @app.route("/update_status", methods=["POST"])

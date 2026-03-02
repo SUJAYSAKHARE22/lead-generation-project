@@ -46,10 +46,19 @@
     padding:25px;
     border-radius:20px;
     transition:0.3s;
-    box-shadow:0 15px 40px rgba(0,0,0,0.4);
     display:flex;
     flex-direction:column;
     justify-content:space-between;
+}
+
+/* DARK */
+body:not(.light) .card{
+    box-shadow:0 15px 40px rgba(0,0,0,0.4);
+}
+
+/* LIGHT */
+body.light .card{
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
 }
 
 .card:hover{
@@ -67,7 +76,16 @@
     height:60px;
     border-radius:12px;
     object-fit:cover;
+}
+
+/* DARK */
+body:not(.light) .project-logo{
     background:#111827;
+}
+
+/* LIGHT */
+body.light .project-logo{
+    background:#f1f5f9;
 }
 
 .title{
@@ -226,5 +244,15 @@ window.onclick = function(e){
         modal.style.display = "none";
     }
 }
+</script>
+<script>
+/* Restore theme selected in AI Chat */
+document.addEventListener("DOMContentLoaded", function () {
+    const savedTheme = localStorage.getItem("theme");
+
+    if (savedTheme === "light") {
+        document.body.classList.add("light");
+    }
+});
 </script>
 {% endblock %}
