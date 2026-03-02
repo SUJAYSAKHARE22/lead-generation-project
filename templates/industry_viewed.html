@@ -17,11 +17,20 @@ margin-top:20px;
 }
 
 .card{
-background:var(--card);
-padding:30px;
-border-radius:20px;
-box-shadow:0 15px 40px rgba(0,0,0,0.4);
-transition:0.3s;
+    background:var(--card);
+    padding:30px;
+    border-radius:20px;
+    transition:0.3s;
+}
+
+/* DARK */
+body:not(.light) .card{
+    box-shadow:0 15px 40px rgba(0,0,0,0.4);
+}
+
+/* LIGHT */
+body.light .card{
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
 }
 
 .card:hover{

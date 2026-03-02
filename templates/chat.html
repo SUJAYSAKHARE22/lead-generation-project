@@ -52,8 +52,6 @@ transition:0.3s;
 
 .sidebar{
 width:260px;
-min-width:260px;
-max-width:260px;
 background:var(--card);
 padding:30px 20px;
 overflow-y:auto;
@@ -61,18 +59,22 @@ scrollbar-gutter:stable;
 display:flex;
 flex-direction:column;
 gap:8px;
+transition:width 0.25s ease, padding 0.25s ease;
 }
-
 .main-sidebar{
 position:fixed;
 left:0;
 top:0;
 height:100vh;
 }
+/* collapsed width override */
 
 .projects-sidebar{
-margin-left:260px;
-height:100vh;
+    position:fixed;
+    left:260px;        /* sits next to main sidebar */
+    top:0;
+    height:100vh;
+    width:260px;
 }
 
 /* Dashboard Sidebar Links */
@@ -127,11 +129,25 @@ color:white;
 display:flex;
 align-items:center;
 gap:12px;
-padding:12px;
-border-radius:12px;
+padding:10px 12px;
+border-radius:14px;
 background:var(--surface);
 cursor:pointer;
-transition:0.3s;
+transition:0.25s ease;
+min-height:48px;
+}
+.chat-item span{
+font-size:14px;
+font-weight:500;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+}
+
+/* hover */
+.chat-item:hover{
+background:var(--accent);
+color:white;
 }
 
 .chat-item:hover{
@@ -140,22 +156,27 @@ color:white;
 }
 
 .chat-logo{
-width:36px;
-height:36px;
-border-radius:8px;
+width:34px;
+height:34px;
+border-radius:10px;
 object-fit:cover;
+background:#0b1220;
+padding:4px;
+box-shadow:0 2px 6px rgba(0,0,0,0.35);
+transition:0.25s ease;
 }
 
 /* MAIN */
 
 
 .main{
-flex:1;
-display:flex;
-flex-direction:column;
-padding:30px;
-background:var(--bg);
-transition:0.3s;
+    flex:1;
+    margin-left:520px;   /* space for both sidebars */
+    display:flex;
+    flex-direction:column;
+    padding:30px;
+    background:var(--bg);
+    transition:0.3s;
 }
 
 /* TOPBAR */
@@ -327,23 +348,180 @@ body.light .sidebar[style*="#111827"]{
 .chat-item.active span{
     color:white;
 }
+/* ===== BASE SIDEBAR LAYOUT (REQUIRED) ===== */
+
+/* Left navigation */
+.main-sidebar{
+    position:fixed;
+    left:0;
+    top:0;
+    width:260px;
+    height:100vh;
+}
+
+/* Projects sidebar sits next to it */
+.projects-sidebar{
+    position:fixed;
+    left:260px;           /* attach to main sidebar */
+    top:0;
+    width:260px;
+    height:100vh;
+}
+
+
+/* =====================================================
+   CLEAN COLLAPSE SYSTEM (FINAL)
+   Left menu shrinks + Projects show logos only
+===================================================== */
+
+/* Collapse LEFT MAIN SIDEBAR */
+body.sidebar-collapsed .main-sidebar{
+    width:70px;
+    padding:30px 10px;
+    overflow:hidden;
+}
+
+/* Hide text in left sidebar */
+body.sidebar-collapsed .main-sidebar h2,
+body.sidebar-collapsed .main-sidebar a span{
+    display:none;
+}
+
+/* Center icons */
+body.sidebar-collapsed .main-sidebar a{
+    justify-content:center;
+}
+
+
+/* ===== PROJECT SIDEBAR (LOGO MODE) ===== */
+
+body.sidebar-collapsed .projects-sidebar{
+    width:90px;
+    left:70px;            /* move beside collapsed main sidebar */
+    padding:20px 6px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+
+/* Show title small */
+body.sidebar-collapsed .projects-sidebar h2{
+    font-size:13px;
+    margin-bottom:10px;
+}
+
+/* New Project button becomes square */
+body.sidebar-collapsed .projects-sidebar button{
+    width:44px;
+    height:44px;
+    padding:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:12px;
+    font-size:0;              /* hide text */
+}
+
+body.sidebar-collapsed .projects-sidebar button i{
+    font-size:18px;
+}
+
+/* Project item = logo only */
+body.sidebar-collapsed .projects-sidebar .chat-item{
+    width:44px;
+    height:44px;
+    padding:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+/* Hide project names */
+body.sidebar-collapsed .projects-sidebar .chat-item span{
+    display:none;
+}
+
+/* Logo size */
+body.sidebar-collapsed .projects-sidebar .chat-logo{
+    width:28px;
+    height:28px;
+}
+
+
+body.sidebar-collapsed .main{
+    margin-left:160px;   /* 70px main + 90px projects */
+}
+
+
+/* ===== Toggle Button Position ===== */
+
+.sidebar-toggle{
+    position:fixed;
+    top:20px;
+    left:270px;
+    z-index:9999;
+    background:var(--card);
+    color:var(--text);
+    border:none;
+    padding:10px 12px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+body.sidebar-collapsed .sidebar-toggle{
+    left:80px;
+}
+/* Prevent overlap with toggle button */
+.projects-sidebar{
+    padding-top:80px;   /* creates space for toggle button */
+}
+
+body.sidebar-collapsed .projects-sidebar{
+    padding-top:80px;   /* same spacing when collapsed */
+}
 </style>
 </head>
 
 <body>
-
+<button class="sidebar-toggle" onclick="toggleSidebar()">
+    <i class="fas fa-bars"></i>
+</button>
 <!-- ================= DASHBOARD SIDEBAR ================= -->
 
 <div class="sidebar main-sidebar">
 <h2>🚀 LeadPilotGen6</h2>
-<a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
-<a href="/savedprojects"><i class="fas fa-folder"></i> Product</a>
-<a href="/chat"><i class="fas fa-robot"></i> AI Chat</a>
-<a href="/overview"><i class="fas fa-brain"></i> Overview</a>
-<a href="/call_for_action"><i class="fas fa-bullhorn"></i> Call For Action</a>
-<a href="/industry_viewed"><i class="fas fa-brain"></i> Industry Viewed</a>
-<a href="/export_excel"><i class="fas fa-file-excel"></i> Export Leads</a>
-<a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+<a href="/dashboard" class="{% if active_page == 'dashboard' %}active{% endif %}">
+    <i class="fas fa-chart-line"></i>
+    <span>Dashboard</span>
+</a>
+<a href="/savedprojects" class="{% if active_page == 'product' %}active{% endif %}">
+    <i class="fas fa-folder"></i>
+    <span>Product</span>
+</a>
+<a href="/chat" class="{% if active_page == 'chat' %}active{% endif %}">
+    <i class="fas fa-robot"></i>
+    <span>AI Chat</span>
+</a>
+<a href="/overview" class="{% if active_page == 'overview' %}active{% endif %}">
+    <i class="fas fa-brain"></i>
+    <span>Overview</span>
+</a>
+<a href="/call_for_action" class="{% if active_page == 'cta' %}active{% endif %}">
+    <i class="fas fa-bullhorn"></i>
+    <span>Call For Action</span>
+</a>
+<a href="/industry_viewed" class="{% if active_page == 'industry' %}active{% endif %}">
+    <i class="fas fa-brain"></i>
+    <span>Industry Viewed</span>
+</a>
+<a href="/export_excel">
+    <i class="fas fa-file-excel"></i>
+    <span>Export Leads</span>
+</a>
+<a href="/logout">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
+</a>
 </div>
 
 <!-- ================= AI CHAT SIDEBAR ================= -->
@@ -672,6 +850,24 @@ function toggleTheme() {
         }
     }
 }
+// Sidebar toggle (shared behavior)
+function toggleSidebar(){
+    document.body.classList.toggle("sidebar-collapsed");
+
+    if(document.body.classList.contains("sidebar-collapsed")){
+        localStorage.setItem("sidebar","closed");
+    }else{
+        localStorage.setItem("sidebar","open");
+    }
+}
+
+// Restore state
+window.addEventListener("DOMContentLoaded", function(){
+    const state = localStorage.getItem("sidebar");
+    if(state === "closed"){
+        document.body.classList.add("sidebar-collapsed");
+    }
+});
 </script>
 </body>
 </html>

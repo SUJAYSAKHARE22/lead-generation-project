@@ -11,9 +11,20 @@
 }
 
 .project-card{
-    background:var(--card);
     border-radius:16px;
     padding:20px;
+}
+
+/* DARK (default) */
+body:not(.light) .project-card{
+    background:#1e293b;
+    color:white;
+}
+
+/* LIGHT */
+body.light .project-card{
+    background:#ffffff;
+    color:#0f172a;
 }
 
 .project-card h3{ margin-bottom:8px; }
@@ -26,12 +37,23 @@
 
 .company-list{ display:grid; gap:12px; }
 
+ 
 .company-card{
-    background:#111827;
     border-radius:12px;
     padding:14px;
 }
 
+/* DARK (default) */
+body:not(.light) .company-card{
+    background:#111827;
+    color:white;
+}
+
+/* LIGHT */
+body.light .company-card{
+    background:#ffffff;
+    color:#0f172a;
+}
 .company-card h4{ margin-bottom:6px; font-size:16px; }
 
 .muted{
@@ -45,9 +67,8 @@
     text-decoration:none;
 }
 
-.generate-btn{
+ .generate-btn{
     margin-top:10px;
-    background:#2563eb;
     border:none;
     padding:8px 12px;
     border-radius:8px;
@@ -56,7 +77,19 @@
     font-size:13px;
 }
 
-.generate-btn:hover{ background:#1d4ed8; }
+/* DARK */
+body:not(.light) .generate-btn{
+    background:#2563eb;
+}
+
+/* LIGHT */
+body.light .generate-btn{
+    background:#4f46e5;
+}
+
+.generate-btn:hover{
+    filter:brightness(1.1);
+}
 
 #emailModal{
     display:none;
@@ -68,13 +101,24 @@
     z-index:1000;
 }
 
-.modal-content{
-    background:#1f2937;
+ .modal-content{
     padding:22px;
     border-radius:14px;
     width:650px;
     max-height:85vh;
     overflow:auto;
+}
+
+/* DARK */
+body:not(.light) .modal-content{
+    background:#1f2937;
+    color:white;
+}
+
+/* LIGHT */
+body.light .modal-content{
+    background:#ffffff;
+    color:#0f172a;
 }
 
 .modal-content input,
@@ -136,7 +180,17 @@
     color:#60a5fa;
     margin-bottom:8px;
 }
-
+/* LIGHT PAGE BACKGROUND */
+body.light{
+    background:#f1f5f9;
+    color:#0f172a;
+}
+body.light .company-card a{
+    color:#2563eb;
+}
+body.light .sidebar{
+    background:#ffffff;
+}
 .empty{ color:var(--soft); }
 </style>
 {% endblock %}
@@ -369,5 +423,13 @@ function copyEmail(){
     setTimeout(() => { sendStatus.style.display = "none"; }, 2000);
 }
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const savedTheme = localStorage.getItem("theme");
 
+    if (savedTheme === "light") {
+        document.body.classList.add("light");
+    }
+});
+</script>
 {% endblock %}
