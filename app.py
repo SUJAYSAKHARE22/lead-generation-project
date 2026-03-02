@@ -10,6 +10,10 @@ import os
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 from ai_agent import generate_newsletter_draft
+from cross_project_matcher import find_matching_projects
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "leads.db")
@@ -21,7 +25,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app = Flask(__name__)
 app.secret_key = "tars_stable_system"
 
-SERP_API_KEY = "702c63ae7215840ef169436872c89fcfb19913954d04015f015bb025eeaf1bf9"
+SERP_API_KEY = ""
 
 @app.context_processor
 def inject_active_page():
@@ -235,18 +239,7 @@ def find_company_and_hr_linkedin(company_name):
 # GOOGLE MAPS SEARCH
 # ===============================
 def map_industry_to_search(industry):
-    mapping = {
-        "Industrial IoT": "automation companies",
-        "Manufacturing": "manufacturing companies",
-        "IT Services": "software companies",
-        "Engineering Services": "engineering firms",
-        "Energy": "energy companies",
-        "Logistics": "logistics companies",
-        "Healthcare": "hospitals",
-        "Retail": "retail companies"
-    }
-
-    return mapping.get(industry, industry)
+    return f"{industry}"
 
 def search_companies_maps(keyword, city):
     params = {
@@ -367,21 +360,20 @@ def suggest_industries(description):
     based on the user's product description.
     """
     try:
-        # Define the available mapping keys to ensure LLM stays within bounds
-        valid_industries = [
-            "Industrial IoT", "Manufacturing", "IT Services", 
-            "Engineering Services", "Energy", "Logistics", 
-            "Healthcare", "Retail", "HR Tech", "Education", 
-            "Security Solutions", "Government & Public Sector"
-        ]
+        
 
         prompt = f"""
-        Analyze the following product/company description and identify the most relevant industries.
-        Description: "{description}"
+        Analyze the following product or service description and identify the most relevant target industries.
 
-        Return ONLY a Python-style list of industries from this specific set: {valid_industries}.
-        If none fit perfectly, pick the closest match or "General Business".
-        Respond with ONLY the list, e.g., ["IT Services", "Manufacturing"].
+        Description:
+        "{description}"
+
+        Return ONLY a Python-style list of 3-6 industry names that would be ideal target markets.
+
+        Example format:
+        ["Healthcare", "FinTech", "Logistics"]
+
+        Do not explain. Do not add commentary. Only return the list.
         """
 
         completion = client.chat.completions.create(
@@ -594,34 +586,31 @@ def user_requests_industry_suggestions(msg):
 
 
 def extract_industries_from_text(text):
-    """Look for industry names in an assistant reply.
-
-    Checks numbered or bulleted lines and also scans for known industry
-    keywords. This allows us to capture the exact list the AI provided (for
-    example the six-item list in the user’s attachment).
+    """
+    Extract industries ONLY from properly formatted list items
+    (numbered or bullet style). Do NOT extract capitalized phrases
+    to avoid capturing project names.
     """
     industries = []
+
     for line in text.splitlines():
         line = line.strip()
-        # remove markdown bolding
         clean = line.replace("**", "").replace("*", "")
-        # look for numbered or bulleted entries ending with a colon
+
+        # Match numbered or bulleted items ending with colon
         m = re.match(r'^(?:\d+\.|[-*•])\s*([^:]+):', clean)
         if m:
             industries.append(m.group(1).strip())
-    # if we found nothing via bullets, fall back to capitalized phrases
-    if not industries:
-        caps = re.findall(r"\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)+)\b", text)
-        for cap in caps:
-            industries.append(cap)
-    # deduplicate preserving order
+
+    # Deduplicate while preserving order
     seen = set()
-    out = []
+    result = []
     for ind in industries:
         if ind not in seen:
             seen.add(ind)
-            out.append(ind)
-    return out
+            result.append(ind)
+
+    return result
 
 def create_chat(user, title):
     conn = get_db_connection()
@@ -1302,6 +1291,104 @@ def generate_newsletter():
     )
 
     return jsonify(result)
+
+@app.route("/send_newsletter", methods=["POST"])
+def send_newsletter():
+    if "user" not in session:
+        return {"error": "Unauthorized"}, 403
+    
+    try:
+        data = request.get_json()
+        recipient_email = data.get("recipient_email")
+        subject = data.get("subject")
+        body = data.get("body")
+        company_name = data.get("company_name", "")
+        
+        if not recipient_email or not subject or not body:
+            return jsonify({"success": False, "message": "Missing required fields"}), 400
+        
+        # Get SMTP configuration from environment variables
+        smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+        smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        sender_email = os.getenv("SENDER_EMAIL")
+        sender_password = os.getenv("SENDER_PASSWORD")
+        
+        if not sender_email or not sender_password:
+            return jsonify({
+                "success": False, 
+                "message": "Email configuration not set. Please configure SMTP settings in .env file."
+            }), 500
+        
+        # Create message
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = sender_email
+        msg["To"] = recipient_email
+        
+        # Create plain text and HTML versions
+        text_part = MIMEText(body, "plain")
+        msg.attach(text_part)
+        
+        # Send email
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+        
+        return jsonify({
+            "success": True, 
+            "message": f"Newsletter sent successfully to {company_name} ({recipient_email})!"
+        })
+        
+    except smtplib.SMTPAuthenticationError:
+        return jsonify({
+            "success": False, 
+            "message": "Email authentication failed. Please check your email credentials."
+        }), 500
+    except Exception as e:
+        return jsonify({
+            "success": False, 
+            "message": f"Failed to send email: {str(e)}"
+        }), 500
+
+@app.route("/get_company_project_matches")
+def get_company_project_matches():
+    if "user" not in session:
+        return {"error": "Unauthorized"}, 403
+
+    company_id = request.args.get("company_id")
+
+    conn = get_db_connection()
+
+    company = conn.execute("""
+        SELECT name, description
+        FROM companies
+        WHERE id = ?
+    """, (company_id,)).fetchone()
+
+    if not company:
+        conn.close()
+        return jsonify([])
+
+    company_name, company_description = company
+
+    # Get all projects of this user
+    projects = conn.execute("""
+        SELECT ch.title, p.description
+        FROM chats ch
+        LEFT JOIN products p ON ch.id = p.chat_id
+        WHERE ch.user = ?
+    """, (session["user"],)).fetchall()
+
+    conn.close()
+
+    matches = find_matching_projects(
+        company_name,
+        company_description or "",
+        projects
+    )
+
+    return jsonify(matches)
 
 if __name__ == "__main__":
     app.run(debug=True)

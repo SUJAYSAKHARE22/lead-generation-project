@@ -178,6 +178,7 @@ text-decoration:none;
 </div>
 </div>
 <div class="modal-details" id="modalDetails"></div>
+<div id="crossProjectMatch" style="margin-top:12px;color:var(--soft);font-size:14px;"></div>
 </div>
 </div>
 {% endblock %}
@@ -197,6 +198,20 @@ function openPopup(id,name,website,phone,address,rating,desc,email){
         <p><strong>Rating:</strong> ${rating || "-"}</p>
         ${website ? `<p><a href="${website}" target="_blank">Visit Website</a></p>` : ""}
     `;
+
+    // NEW PART — Fetch matching projects
+    fetch(`/get_company_project_matches?company_id=${id}`)
+    .then(res => res.json())
+    .then(data => {
+        if(data.length > 0){
+            document.getElementById("crossProjectMatch").innerHTML =
+                `<strong>Also matches projects:</strong> ${data.join(", ")}`;
+        } else {
+            document.getElementById("crossProjectMatch").innerHTML =
+                `<strong>Also matches projects:</strong> None`;
+        }
+    });
+
     document.getElementById("companyModal").style.display="flex";
 }
 

@@ -180,7 +180,7 @@ body.light .project-logo{
     <div class="card">
         <div class="project-top">
             <img src="{{ url_for('static', filename='project_logos/' ~ chat[0] ~ '.png') }}"
-                 onerror="this.src='{{ url_for('static', filename='project_logos/default.png') }}'"
+                 data-fallback="{{ url_for('static', filename='project_logos/default.png') }}"
                  class="project-logo">
             <div>
                 <div class="title">{{ chat[1] }}</div>
@@ -231,6 +231,16 @@ document.addEventListener('DOMContentLoaded', function(){
             this.value = '';
             return;
         }
+    });
+
+    const projectLogos = document.querySelectorAll('.project-logo');
+    projectLogos.forEach(function(img){
+        img.addEventListener('error', function(){
+            const fallback = img.getAttribute('data-fallback');
+            if(fallback && img.src !== fallback){
+                img.src = fallback;
+            }
+        });
     });
 });
 
