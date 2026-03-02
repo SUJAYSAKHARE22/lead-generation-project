@@ -10,6 +10,7 @@ import os
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 from ai_agent import generate_newsletter_draft
+from cross_project_matcher import find_matching_projects
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "leads.db")
@@ -1263,6 +1264,45 @@ def generate_newsletter():
     )
 
     return jsonify(result)
+
+@app.route("/get_company_project_matches")
+def get_company_project_matches():
+    if "user" not in session:
+        return {"error": "Unauthorized"}, 403
+
+    company_id = request.args.get("company_id")
+
+    conn = get_db_connection()
+
+    company = conn.execute("""
+        SELECT name, description
+        FROM companies
+        WHERE id = ?
+    """, (company_id,)).fetchone()
+
+    if not company:
+        conn.close()
+        return jsonify([])
+
+    company_name, company_description = company
+
+    # Get all projects of this user
+    projects = conn.execute("""
+        SELECT ch.title, p.description
+        FROM chats ch
+        LEFT JOIN products p ON ch.id = p.chat_id
+        WHERE ch.user = ?
+    """, (session["user"],)).fetchall()
+
+    conn.close()
+
+    matches = find_matching_projects(
+        company_name,
+        company_description or "",
+        projects
+    )
+
+    return jsonify(matches)
 
 if __name__ == "__main__":
     app.run(debug=True)
