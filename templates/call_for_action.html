@@ -90,6 +90,8 @@
 .modal-actions{
     display:flex;
     justify-content:space-between;
+    align-items:center;
+    gap:10px;
 }
 
 .btn-close{
@@ -99,6 +101,25 @@
     border-radius:8px;
     color:white;
     cursor:pointer;
+}
+
+.btn-send{
+    background:#2563eb;
+    border:none;
+    padding:8px 16px;
+    border-radius:8px;
+    color:white;
+    cursor:pointer;
+}
+
+.btn-send:hover:not(:disabled){
+    background:#1d4ed8;
+}
+
+.btn-send:disabled{
+    background:#94a3b8;
+    cursor:not-allowed;
+    opacity:0.6;
 }
 
 .btn-copy{
@@ -147,7 +168,8 @@
                 `{{ p.title|escape }}`,
                 `{{ p.description|escape }}`,
                 `{{ c.name|escape }}`,
-                `{{ c.description|escape }}`
+                `{{ c.description|escape }}`,
+                `{{ c.email|escape }}`
             )">
             ✉ Generate Newsletter
         </button>
@@ -169,27 +191,61 @@
             Generating email...
         </div>
 
+        <div id="recipientInfo" style="display:none; margin-bottom:14px; padding:12px; background:rgba(34,197,94,0.1); border-radius:8px; border:1px solid rgba(34,197,94,0.3);">
+            <strong>📧 Sending To:</strong>
+            <div style="margin-top:8px;">
+                <div id="recipientName" style="font-weight:600; color:#22c55e; font-size:15px;"></div>
+                <div id="recipientEmail" style="font-size:13px; color:#94a3b8; margin-top:4px;"></div>
+            </div>
+        </div>
+
         <label><strong>Subject:</strong></label>
-        <input id="emailSubject">
+        <input id="emailSubject" placeholder="Email subject will appear here...">
 
         <label><strong>Body:</strong></label>
         <textarea id="emailBody" rows="10"></textarea>
 
+        <div id="sendStatus" style="display:none; margin-top:10px; padding:10px; border-radius:8px;"></div>
+
         <div class="modal-actions">
-            <button class="btn-copy" onclick="copyEmail()">Copy</button>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-send" id="sendBtn" onclick="sendEmail()">
+                    📧 Send Email
+                </button>
+                <button class="btn-copy" onclick="copyEmail()">📋 Copy</button>
+            </div>
             <button class="btn-close" onclick="closeModal()">Close</button>
         </div>
     </div>
 </div>
 
 <script>
-async function generateEmail(projectTitle, projectDesc, companyName, companyDesc){
+let currentCompanyEmail = "";
+let currentCompanyName = "";
+
+async function generateEmail(projectTitle, projectDesc, companyName, companyDesc, companyEmail){
+
+    currentCompanyEmail = companyEmail || "";
+    currentCompanyName = companyName || "";
+
+    // Check if email exists first
+    if(!currentCompanyEmail || currentCompanyEmail.trim() === "" || currentCompanyEmail === "None"){
+        alert("Email is not present for this particular company.");
+        return;
+    }
 
     const modal = document.getElementById("emailModal");
     const loading = document.getElementById("loadingText");
+    const sendBtn = document.getElementById("sendBtn");
+    const recipientInfo = document.getElementById("recipientInfo");
+    const recipientNameDiv = document.getElementById("recipientName");
+    const recipientEmailDiv = document.getElementById("recipientEmail");
+    const sendStatus = document.getElementById("sendStatus");
 
     modal.style.display="flex";
     loading.style.display="block";
+    recipientInfo.style.display="none";
+    sendStatus.style.display="none";
 
     document.getElementById("emailSubject").value="";
     document.getElementById("emailBody").value="";
@@ -212,8 +268,17 @@ async function generateEmail(projectTitle, projectDesc, companyName, companyDesc
 
         loading.style.display="none";
 
+        // Display AI-generated content
         document.getElementById("emailSubject").value=data.subject || "";
         document.getElementById("emailBody").value=data.body || "";
+
+        // Show recipient info
+        recipientNameDiv.textContent = currentCompanyName;
+        recipientEmailDiv.textContent = currentCompanyEmail;
+        recipientInfo.style.display="block";
+        
+        // Enable send button since email is valid
+        sendBtn.disabled = false;
 
     } catch(err){
         loading.innerText="Error generating email.";
@@ -221,14 +286,87 @@ async function generateEmail(projectTitle, projectDesc, companyName, companyDesc
     }
 }
 
+async function sendEmail(){
+    const subject = document.getElementById("emailSubject").value;
+    const body = document.getElementById("emailBody").value;
+    const sendBtn = document.getElementById("sendBtn");
+    const sendStatus = document.getElementById("sendStatus");
+
+    if(!currentCompanyEmail || currentCompanyEmail.trim() === ""){
+        alert("Email is not present for this particular company.");
+        return;
+    }
+
+    if(!subject || !body){
+        alert("Please generate a newsletter first.");
+        return;
+    }
+
+    // Disable send button and show loading
+    sendBtn.disabled = true;
+    sendBtn.textContent = "Sending...";
+    sendStatus.style.display = "none";
+
+    try{
+        const res = await fetch("/send_newsletter", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                recipient_email: currentCompanyEmail,
+                subject: subject,
+                body: body,
+                company_name: currentCompanyName
+            })
+        });
+
+        const data = await res.json();
+
+        if(data.success){
+            sendStatus.style.display = "block";
+            sendStatus.style.background = "rgba(34,197,94,0.1)";
+            sendStatus.style.color = "#22c55e";
+            sendStatus.style.border = "1px solid rgba(34,197,94,0.3)";
+            sendStatus.textContent = "✅ " + data.message;
+        } else {
+            sendStatus.style.display = "block";
+            sendStatus.style.background = "rgba(239,68,68,0.1)";
+            sendStatus.style.color = "#ef4444";
+            sendStatus.style.border = "1px solid rgba(239,68,68,0.3)";
+            sendStatus.textContent = "❌ " + data.message;
+        }
+
+    } catch(err){
+        sendStatus.style.display = "block";
+        sendStatus.style.background = "rgba(239,68,68,0.1)";
+        sendStatus.style.color = "#ef4444";
+        sendStatus.style.border = "1px solid rgba(239,68,68,0.3)";
+        sendStatus.textContent = "❌ Error sending email: " + err.message;
+        console.error(err);
+    } finally {
+        // Re-enable send button
+        sendBtn.disabled = false;
+        sendBtn.textContent = "📧 Send Email";
+    }
+}
+
 function closeModal(){
     document.getElementById("emailModal").style.display="none";
+    document.getElementById("sendStatus").style.display="none";
 }
 
 function copyEmail(){
     const subject=document.getElementById("emailSubject").value;
     const body=document.getElementById("emailBody").value;
     navigator.clipboard.writeText("Subject: "+subject+"\n\n"+body);
+    
+    // Show brief confirmation
+    const sendStatus = document.getElementById("sendStatus");
+    sendStatus.style.display = "block";
+    sendStatus.style.background = "rgba(34,197,94,0.1)";
+    sendStatus.style.color = "#22c55e";
+    sendStatus.style.border = "1px solid rgba(34,197,94,0.3)";
+    sendStatus.textContent = "📋 Copied to clipboard!";
+    setTimeout(() => { sendStatus.style.display = "none"; }, 2000);
 }
 </script>
 

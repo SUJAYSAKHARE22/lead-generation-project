@@ -359,15 +359,14 @@ body.light .sidebar[style*="#111827"]{
 
 {% for chat in chats %}
 <div class="chat-item {% if active_chat == chat[0] %}active{% endif %}"
-     onclick="location.href='/chat_session/{{chat[0]}}'"
-     oncontextmenu="showMenu(event, {{chat[0]}})">
+  data-chat-id="{{ chat[0] }}">
 
 {% set logo_path = 'project_logos/' ~ chat[0] ~ '.png' %}
 {% set logo_url = url_for('static', filename=logo_path) %}
 {% set default_logo = url_for('static', filename='project_logos/default.png') %}
 
 <img src="{{ logo_url }}"
-    onerror="this.onerror=null;this.src='{{ default_logo }}';"
+  data-fallback="{{ default_logo }}"
     class="chat-logo">
 
 <span>{{chat[1]}}</span>
@@ -619,6 +618,27 @@ document.addEventListener("keydown", function(e){
 window.addEventListener("DOMContentLoaded", function () {
     const savedTheme = localStorage.getItem("theme");
     const icon = document.getElementById("themeIcon");
+
+  document.querySelectorAll(".chat-item[data-chat-id]").forEach(function(item){
+    const chatId = item.getAttribute("data-chat-id");
+
+    item.addEventListener("click", function(){
+      location.href = `/chat_session/${chatId}`;
+    });
+
+    item.addEventListener("contextmenu", function(event){
+      showMenu(event, Number(chatId));
+    });
+  });
+
+  document.querySelectorAll(".chat-logo[data-fallback]").forEach(function(img){
+    img.addEventListener("error", function(){
+      const fallback = img.getAttribute("data-fallback");
+      if(fallback && img.src !== fallback){
+        img.src = fallback;
+      }
+    });
+  });
 
     if (savedTheme === "light") {
         document.body.classList.add("light");

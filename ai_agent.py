@@ -18,17 +18,31 @@ def generate_newsletter_draft(project_title, project_description,
 
     try:
         prompt = f"""
-You are a professional B2B sales copywriter.
+You are a professional B2B sales copywriter specializing in CRM and lead generation solutions.
 
-Write a personalized cold outreach email.
+Write a personalized cold outreach email to pitch our AI-powered CRM and lead generation platform.
 
-PROJECT:
-{project_title}
-{project_description}
+OUR SOLUTION:
+LeadPilotGen6 - An intelligent CRM and lead generation platform that helps businesses:
+- Automatically discover and qualify potential clients
+- Manage customer relationships efficiently
+- Automate outreach and follow-ups
+- Track sales pipeline and conversions
+- Generate AI-powered insights
+
+PITCH CONTEXT:
+We noticed {company_name} could benefit from our solution based on their industry and business model.
 
 TARGET COMPANY:
 {company_name}
 {company_description}
+
+Write a compelling email that:
+1. Opens with a personalized observation about their company
+2. Introduces our CRM/lead generation platform and its key benefits
+3. Explains specifically how it can solve their business challenges
+4. Includes a clear call-to-action (schedule a demo, free trial, or consultation)
+5. Keeps it concise and professional (under 200 words)
 
 Return STRICT JSON ONLY:
 

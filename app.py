@@ -11,6 +11,9 @@ from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 from ai_agent import generate_newsletter_draft
 from cross_project_matcher import find_matching_projects
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "leads.db")
@@ -1249,6 +1252,65 @@ def generate_newsletter():
     )
 
     return jsonify(result)
+
+@app.route("/send_newsletter", methods=["POST"])
+def send_newsletter():
+    if "user" not in session:
+        return {"error": "Unauthorized"}, 403
+    
+    try:
+        data = request.get_json()
+        recipient_email = data.get("recipient_email")
+        subject = data.get("subject")
+        body = data.get("body")
+        company_name = data.get("company_name", "")
+        
+        if not recipient_email or not subject or not body:
+            return jsonify({"success": False, "message": "Missing required fields"}), 400
+        
+        # Get SMTP configuration from environment variables
+        smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+        smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        sender_email = os.getenv("SENDER_EMAIL")
+        sender_password = os.getenv("SENDER_PASSWORD")
+        
+        if not sender_email or not sender_password:
+            return jsonify({
+                "success": False, 
+                "message": "Email configuration not set. Please configure SMTP settings in .env file."
+            }), 500
+        
+        # Create message
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = sender_email
+        msg["To"] = recipient_email
+        
+        # Create plain text and HTML versions
+        text_part = MIMEText(body, "plain")
+        msg.attach(text_part)
+        
+        # Send email
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+        
+        return jsonify({
+            "success": True, 
+            "message": f"Newsletter sent successfully to {company_name} ({recipient_email})!"
+        })
+        
+    except smtplib.SMTPAuthenticationError:
+        return jsonify({
+            "success": False, 
+            "message": "Email authentication failed. Please check your email credentials."
+        }), 500
+    except Exception as e:
+        return jsonify({
+            "success": False, 
+            "message": f"Failed to send email: {str(e)}"
+        }), 500
 
 @app.route("/get_company_project_matches")
 def get_company_project_matches():
