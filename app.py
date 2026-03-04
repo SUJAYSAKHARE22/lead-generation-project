@@ -25,7 +25,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app = Flask(__name__)
 app.secret_key = "tars_stable_system"
 
-SERP_API_KEY = ""
+SERP_API_KEY = "a1af308b83dfea02d95471c748653dd3e8c0e726e9888e7a810beea2dcc424c9"
 
 @app.context_processor
 def inject_active_page():
@@ -351,6 +351,96 @@ def get_companies(chat_id):
         "leadership_linkedin": r[9]
     } for r in rows]
 
+
+# ===============================
+# SEARCH EXISTING COMPANIES IN DB
+# ===============================
+def search_existing_companies(city):
+    """
+    Fetch companies already stored in DB that match the selected city.
+    We exclude duplicates by company name.
+    """
+    conn = get_db_connection()
+
+    rows = conn.execute("""
+        SELECT DISTINCT name, website, phone, address, rating,
+               description, email, ceo, company_linkedin, leadership_linkedin
+        FROM companies
+        WHERE address LIKE ?
+    """, (f"%{city}%",)).fetchall()
+
+    conn.close()
+
+    companies = [{
+        "name": r[0],
+        "website": r[1],
+        "phone": r[2],
+        "address": r[3],
+        "rating": r[4],
+        "description": r[5],
+        "email": r[6],
+        "ceo": r[7],
+        "company_linkedin": r[8],
+        "leadership_linkedin": r[9]
+    } for r in rows]
+
+    return companies
+
+# ===============================
+# AI RELEVANCE FILTER
+# ===============================
+def filter_relevant_companies(project_description, companies):
+    """
+    Uses Groq LLM to check which companies are relevant to the project.
+    Returns only relevant companies.
+    """
+    try:
+
+        context = "\n".join([
+            f"{c['name']} - {c.get('description','')}"
+            for c in companies[:30]  # limit for token safety
+        ])
+
+        prompt = f"""
+        Project Description:
+        {project_description}
+
+        Companies:
+        {context}
+
+        From the companies list, return ONLY the company names that are relevant
+        to the project.
+
+        Return ONLY a JSON list.
+
+        Example:
+        ["Apollo Hospital", "HealthPlix"]
+        """
+
+        completion = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2,
+            max_tokens=200
+        )
+
+        response = completion.choices[0].message.content.strip()
+
+        start = response.find("[")
+        end = response.rfind("]") + 1
+
+        if start == -1:
+            return []
+
+        names = json.loads(response[start:end])
+
+        relevant = [c for c in companies if c["name"] in names]
+
+        return relevant
+
+    except Exception as e:
+        print("Relevance filter error:", e)
+        return []
 # ===============================
 # INDUSTRY SUGGESTION ENGINE
 # ===============================
@@ -1019,17 +1109,51 @@ def run_targeting():
     selected_industries = request.form.getlist("industry[]")
     city = request.form["city"]
 
-    print("Industries received:", selected_industries)
-    print("City received:", city)
-
     chat_id = session.get("active_chat")
+
+    # clear previous project leads
     clear_companies(chat_id)
 
-    for ind in selected_industries:
-        search_keyword = map_industry_to_search(ind)
-        companies = search_companies_maps(search_keyword, city)
-        for c in companies:
-            save_company(c, chat_id)
+    # get project description
+    product_name, project_description, _ = get_product_info(chat_id)
+
+    # ----------------------------
+    # STEP 1: SEARCH EXISTING DB
+    # ----------------------------
+    db_companies = search_existing_companies(city)
+
+    print("DB companies found:", len(db_companies))
+
+    # ----------------------------
+    # STEP 2: AI FILTER
+    # ----------------------------
+    relevant_companies = filter_relevant_companies(
+        project_description or "",
+        db_companies
+    )
+
+    print("Relevant DB companies:", len(relevant_companies))
+
+    for c in relevant_companies:
+        save_company(c, chat_id)
+
+    # ----------------------------
+    # STEP 3: SERP SEARCH IF NEEDED
+    # ----------------------------
+    lead_threshold = 30
+
+    current_leads = len(relevant_companies)
+
+    if current_leads < lead_threshold:
+
+        for ind in selected_industries:
+
+            search_keyword = map_industry_to_search(ind)
+
+            companies = search_companies_maps(search_keyword, city)
+
+            for c in companies:
+                save_company(c, chat_id)
 
     session["selected_city"] = city
     session["suggested_industry"] = selected_industries
