@@ -54,12 +54,13 @@ transition:0.3s;
 width:260px;
 background:var(--card);
 padding:30px 20px;
-overflow-y:auto;
-scrollbar-gutter:stable;
+height:100vh;          /* full screen height */
+overflow:hidden;       /* remove scrollbar */
 display:flex;
 flex-direction:column;
 gap:8px;
-transition:width 0.25s ease, padding 0.25s ease;
+    scrollbar-width:thin;
+    scrollbar-color:#475569 transparent;
 }
 .main-sidebar{
 position:fixed;
@@ -256,9 +257,14 @@ overflow-y:auto;
 
 /* right-align entire message for user */
 .msg.user{
-  justify-content:flex-end;
+    display:flex;
+    justify-content:flex-end;
 }
 
+/* FORCE user message to stay right */
+.msg.user .msg-content{
+    flex-direction:row-reverse;
+}
 /* icon styling */
 .icon{
   font-size:1.2em;
@@ -478,6 +484,22 @@ body.sidebar-collapsed .sidebar-toggle{
 
 body.sidebar-collapsed .projects-sidebar{
     padding-top:80px;   /* same spacing when collapsed */
+}
+.sidebar::-webkit-scrollbar{
+    width:6px;
+}
+
+.sidebar::-webkit-scrollbar-track{
+    background:transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb{
+    background:#475569;
+    border-radius:10px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover{
+    background:#6366f1;
 }
 </style>
 </head>
@@ -870,4 +892,4 @@ window.addEventListener("DOMContentLoaded", function(){
 });
 </script>
 </body>
-</html>
+  </html>
