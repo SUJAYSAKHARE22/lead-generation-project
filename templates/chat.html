@@ -54,12 +54,11 @@ transition:0.3s;
 width:260px;
 background:var(--card);
 padding:30px 20px;
-overflow-y:auto;
-scrollbar-gutter:stable;
+height:100vh;          /* full screen height */
+overflow:hidden;       /* remove scrollbar */
 display:flex;
 flex-direction:column;
 gap:8px;
-transition:width 0.25s ease, padding 0.25s ease;
 }
 .main-sidebar{
 position:fixed;
@@ -256,9 +255,14 @@ overflow-y:auto;
 
 /* right-align entire message for user */
 .msg.user{
-  justify-content:flex-end;
+    display:flex;
+    justify-content:flex-end;
 }
 
+/* FORCE user message to stay right */
+.msg.user .msg-content{
+    flex-direction:row-reverse;
+}
 /* icon styling */
 .icon{
   font-size:1.2em;
@@ -870,4 +874,4 @@ window.addEventListener("DOMContentLoaded", function(){
 });
 </script>
 </body>
-</html>
+  </html>
