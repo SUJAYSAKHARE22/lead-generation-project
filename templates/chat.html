@@ -59,6 +59,8 @@ overflow:hidden;       /* remove scrollbar */
 display:flex;
 flex-direction:column;
 gap:8px;
+    scrollbar-width:thin;
+    scrollbar-color:#475569 transparent;
 }
 .main-sidebar{
 position:fixed;
@@ -482,6 +484,22 @@ body.sidebar-collapsed .sidebar-toggle{
 
 body.sidebar-collapsed .projects-sidebar{
     padding-top:80px;   /* same spacing when collapsed */
+}
+.sidebar::-webkit-scrollbar{
+    width:6px;
+}
+
+.sidebar::-webkit-scrollbar-track{
+    background:transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb{
+    background:#475569;
+    border-radius:10px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover{
+    background:#6366f1;
 }
 </style>
 </head>
