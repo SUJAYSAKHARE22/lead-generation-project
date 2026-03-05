@@ -242,7 +242,22 @@ cursor:pointer;
 flex:1;
 overflow-y:auto;
 }
+.messages::-webkit-scrollbar{
+    width:6px;
+}
 
+.messages::-webkit-scrollbar-track{
+    background:transparent;
+}
+
+.messages::-webkit-scrollbar-thumb{
+    background:#475569;
+    border-radius:10px;
+}
+
+.messages::-webkit-scrollbar-thumb:hover{
+    background:#6366f1;
+}
 .msg{
   margin-bottom:20px;
   display:flex;
@@ -299,7 +314,7 @@ color:white;
 
 .input-wrapper{
 margin-top:15px;
-}
+}   
 
 .input-box{
 display:flex;
@@ -485,22 +500,7 @@ body.sidebar-collapsed .sidebar-toggle{
 body.sidebar-collapsed .projects-sidebar{
     padding-top:80px;   /* same spacing when collapsed */
 }
-.sidebar::-webkit-scrollbar{
-    width:6px;
-}
 
-.sidebar::-webkit-scrollbar-track{
-    background:transparent;
-}
-
-.sidebar::-webkit-scrollbar-thumb{
-    background:#475569;
-    border-radius:10px;
-}
-
-.sidebar::-webkit-scrollbar-thumb:hover{
-    background:#6366f1;
-}
 </style>
 </head>
 
@@ -568,7 +568,7 @@ body.sidebar-collapsed .projects-sidebar{
 <img src="{{ logo_url }}"
   data-fallback="{{ default_logo }}"
     class="chat-logo">
-
+    
 <span>{{chat[1]}}</span>
 
 </div>

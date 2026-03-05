@@ -1,3 +1,6 @@
+
+ 
+
 import sqlite3
 import requests
 import re
@@ -14,7 +17,8 @@ from cross_project_matcher import find_matching_projects
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "leads.db")
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "project_logos")
@@ -24,7 +28,9 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
 app.secret_key = "tars_stable_system"
-
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
 SERP_API_KEY = ""
 
 @app.context_processor
@@ -63,6 +69,31 @@ client = Groq(api_key=GROQ_API_KEY)
 def get_db_connection():
     return sqlite3.connect(DB_PATH)
 
+# ===============================
+# USER MODEL (Flask-Login)
+# ===============================
+
+class User(UserMixin):
+
+    def __init__(self, id, username):
+        self.id = id
+        self.username = username
+@login_manager.user_loader
+def load_user(user_id):
+
+    conn = get_db_connection()
+
+    user = conn.execute(
+        "SELECT id, username FROM users WHERE id=?",
+        (user_id,)
+    ).fetchone()
+
+    conn.close()
+
+    if user:
+        return User(user[0], user[1])
+
+    return None
 # ===============================
 # DATABASE INIT (COMPANIES TABLE)
 # ===============================
@@ -103,9 +134,17 @@ def init_db():
     except:
         pass
 
+    
+
+    cur.execute("""
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE,
+    password TEXT
+)
+""")
     conn.commit()
     conn.close()
-
 
 # ===============================
 # CHAT SYSTEM TABLES (NEW)
@@ -722,13 +761,16 @@ def save_message(chat_id, role, content):
     conn.close()
 
 
-def get_user_chats(user):
+def get_user_chats():
+
     conn = get_db_connection()
+
     rows = conn.execute(
-        "SELECT id, title FROM chats WHERE user=? ORDER BY id DESC",
-        (user,)
+        "SELECT id, title FROM chats ORDER BY id DESC"
     ).fetchall()
+
     conn.close()
+
     return rows
 
 
@@ -747,9 +789,9 @@ def get_chat_messages(chat_id):
 # ===============================
 
 @app.route("/industry_viewed")
+@login_required
 def industry_viewed():
-    if "user" not in session:
-        return redirect("/")
+   
     
     conn = get_db_connection()
     # Fetch projects and their associated companies
@@ -764,8 +806,8 @@ def industry_viewed():
         FROM products p
         JOIN chats ch ON p.chat_id = ch.id
         LEFT JOIN companies c ON ch.id = c.chat_id
-        WHERE ch.user = ?
-    """, (session["user"],)).fetchall()
+        
+    """,).fetchall()
     conn.close()
 
     if not data:
@@ -835,26 +877,74 @@ def industry_viewed():
 # ===============================
 # ROUTES (UNCHANGED)
 # ===============================
-@app.route("/", methods=["GET", "POST"])
-def login():
+@app.route("/signup", methods=["GET","POST"])
+def signup():
+
     if request.method == "POST":
-        if request.form["username"] == "admin" and request.form["password"] == "tars123":
-            session["user"] = "admin"
+
+        username = request.form["username"]
+        password = request.form["password"]
+
+        hashed_password = generate_password_hash(password)
+
+        conn = get_db_connection()
+
+        try:
+            conn.execute(
+                "INSERT INTO users (username,password) VALUES (?,?)",
+                (username, hashed_password)
+            )
+            conn.commit()
+
+        except:
+            return "User already exists"
+
+        conn.close()
+
+        return redirect("/")
+
+    return render_template("signup.html")
+
+
+@app.route("/", methods=["GET","POST"])
+def login():
+
+    if request.method == "POST":
+
+        username = request.form["username"]
+        password = request.form["password"]
+
+        conn = get_db_connection()
+
+        user = conn.execute(
+            "SELECT * FROM users WHERE username=?",
+            (username,)
+        ).fetchone()
+
+        conn.close()
+
+        if user and check_password_hash(user[2], password):
+
+            user_obj = User(user[0], user[1])
+
+            login_user(user_obj)
+
             return redirect("/chat")
-        return "Invalid Credentials"
+
+        return "Invalid username or password"
+
     return render_template("login.html")
 # ===============================
 # CHAT ROUTES (NEW)
 # ===============================
 
 @app.route("/chat")
+@login_required
 def chat_home():
-    if "user" not in session:
-        return redirect("/")
 
-    chats = get_user_chats(session["user"])
+    chats = get_user_chats()
 
-    active_chat = session.get("active_chat")   # ✅ ADD THIS LINE
+    active_chat = session.get("active_chat")
 
     return render_template(
         "chat.html",
@@ -865,11 +955,11 @@ def chat_home():
     )
 
 @app.route("/create_project")
+@login_required
 def create_project_page():
-    if "user" not in session:
-        return redirect("/")
+    
 
-    chats = get_user_chats(session["user"])
+    chats = get_user_chats()
 
     return render_template(
         "chat.html",
@@ -879,15 +969,15 @@ def create_project_page():
     )
 
 @app.route("/new_chat", methods=["POST"])
+@login_required
 def new_chat():
-    if "user" not in session:
-        return redirect("/")
+   
 
     title = request.form.get("title", "New Project")
     description = request.form.get("description", "")
 
     # 1️⃣ Create chat first
-    chat_id = create_chat(session["user"], title)
+    chat_id = create_chat(current_user.username, title)
 
     # 2️⃣ Save product entry
     conn = get_db_connection()
@@ -931,12 +1021,12 @@ def new_chat():
 
 
 @app.route("/chat_session/<int:chat_id>")
+@login_required
 def chat_session(chat_id):
-    if "user" not in session:
-        return redirect("/")
+   
 
     messages = get_chat_messages(chat_id)
-    chats = get_user_chats(session["user"])
+    chats = get_user_chats()
     session["active_chat"] = chat_id
 
     return render_template(
@@ -1074,9 +1164,9 @@ def send_message():
     return redirect(f"/chat_session/{chat_id}")
 
 @app.route("/delete_project/<int:chat_id>", methods=["POST"])
+@login_required
 def delete_project(chat_id):
-    if "user" not in session:
-        return redirect("/")
+   
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -1102,9 +1192,9 @@ def delete_project(chat_id):
 # RUN TARGETING (FROM DASHBOARD BUTTON)
 # ===============================
 @app.route("/run_targeting", methods=["POST"])
+@login_required
 def run_targeting():
-    if "user" not in session:
-        return redirect("/")
+    
 
     selected_industries = request.form.getlist("industry[]")
     city = request.form["city"]
@@ -1168,9 +1258,9 @@ def run_targeting():
 # DASHBOARD PAGE
 # ===============================
 @app.route("/dashboard")
+@login_required
 def dashboard():
-    if "user" not in session:
-        return redirect("/")
+    
 
     chat_id = session.get("active_chat")
     companies = get_companies(chat_id)
@@ -1201,18 +1291,18 @@ def dashboard():
 
 
 @app.route("/savedprojects")
+@login_required
 def saved_projects():
-    if "user" not in session:
-        return redirect("/")
+    
 
     conn = get_db_connection()
     rows = conn.execute("""
         SELECT ch.id, ch.title, p.description
         FROM chats ch
         LEFT JOIN products p ON ch.id = p.chat_id
-        WHERE ch.user = ?
+        
         ORDER BY ch.id DESC
-    """, (session["user"],)).fetchall()
+    """,).fetchall()
     conn.close()
 
     return render_template("savedprojects.html", chats=rows, active_page="product")
@@ -1221,9 +1311,9 @@ def saved_projects():
 # OPEN SELECTED PROJECT
 # ===============================
 @app.route("/open_project/<int:chat_id>")
+@login_required
 def open_project(chat_id):
-    if "user" not in session:
-        return redirect("/")
+    
 
     # store selected project in session
     session["active_chat"] = chat_id
@@ -1231,9 +1321,9 @@ def open_project(chat_id):
     return redirect("/dashboard")
 
 @app.route("/export_excel")
+@login_required
 def export_excel():
-    if "user" not in session:
-        return redirect("/")
+   
 
     chat_id = session.get("active_chat")
     if not chat_id:
@@ -1279,18 +1369,18 @@ def export_excel():
         headers={"Content-Disposition": "attachment;filename=company_leads.xlsx"})
 
 @app.route("/call_for_action")
+@login_required
 def call_for_action():
-    if "user" not in session:
-        return redirect("/")
+    
 
     conn = get_db_connection()
     rows = conn.execute("""
         SELECT ch.id, ch.title, p.description
         FROM chats ch
         LEFT JOIN products p ON ch.id = p.chat_id
-        WHERE ch.user = ?
+        
         ORDER BY ch.id DESC
-    """, (session["user"],)).fetchall()
+    """,).fetchall()
 
     projects = []
     for chat_id, title, description in rows:
@@ -1324,32 +1414,33 @@ def call_for_action():
     active_page="cta"
 )
 @app.route("/logout")
+@login_required
 def logout():
-    session.clear()
+    logout_user()
     return redirect("/")
 
 @app.route("/overview")
+@login_required
 def overview():
-    if "user" not in session:
-        return redirect("/")
+   
 
     conn = get_db_connection()
     rows = conn.execute("""
         SELECT ch.id, ch.title, p.description
         FROM chats ch
         LEFT JOIN products p ON ch.id = p.chat_id
-        WHERE ch.user = ?
+        
         ORDER BY ch.id DESC
-    """, (session["user"],)).fetchall()
+    """,).fetchall()
     conn.close()
 
     return render_template("overview.html", projects=rows, active_page="overview")
 
 
 @app.route("/overview_project/<int:chat_id>")
+@login_required
 def overview_project(chat_id):
-    if "user" not in session:
-        return redirect("/")
+   
 
     conn = get_db_connection()
 
@@ -1398,9 +1489,9 @@ def update_status():
     return "", 204
 
 @app.route("/generate_newsletter", methods=["POST"])
+@login_required
 def generate_newsletter():
-    if "user" not in session:
-        return {"error": "Unauthorized"}, 403
+   
 
     project_title = request.form["project_title"]
     project_description = request.form["project_description"]
@@ -1417,9 +1508,9 @@ def generate_newsletter():
     return jsonify(result)
 
 @app.route("/send_newsletter", methods=["POST"])
+@login_required
 def send_newsletter():
-    if "user" not in session:
-        return {"error": "Unauthorized"}, 403
+    
     
     try:
         data = request.get_json()
@@ -1476,9 +1567,9 @@ def send_newsletter():
         }), 500
 
 @app.route("/get_company_project_matches")
+@login_required
 def get_company_project_matches():
-    if "user" not in session:
-        return {"error": "Unauthorized"}, 403
+   
 
     company_id = request.args.get("company_id")
 
@@ -1501,8 +1592,8 @@ def get_company_project_matches():
         SELECT ch.title, p.description
         FROM chats ch
         LEFT JOIN products p ON ch.id = p.chat_id
-        WHERE ch.user = ?
-    """, (session["user"],)).fetchall()
+        ORDER BY ch.id DESC
+""").fetchall()
 
     conn.close()
 
