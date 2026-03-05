@@ -929,7 +929,7 @@ def login():
 
             login_user(user_obj)
 
-            return redirect("/chat")
+            return redirect("/dashboard")
 
         return "Invalid username or password"
 
