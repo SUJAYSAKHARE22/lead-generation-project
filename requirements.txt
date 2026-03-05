@@ -9,3 +9,4 @@ openpyxl
 groq
 python-dotenv
 dotenv
+flask-login
