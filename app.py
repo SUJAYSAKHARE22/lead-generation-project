@@ -840,7 +840,7 @@ def login():
     if request.method == "POST":
         if request.form["username"] == "admin" and request.form["password"] == "tars123":
             session["user"] = "admin"
-            return redirect("/chat")
+            return redirect("/dashboard")
         return "Invalid Credentials"
     return render_template("login.html")
 # ===============================
@@ -1175,8 +1175,17 @@ def dashboard():
     chat_id = session.get("active_chat")
     companies = get_companies(chat_id)
 
+    # load projects list
+    conn = get_db_connection()
+    projects = conn.execute("""
+        SELECT ch.id, ch.title, p.description
+        FROM chats ch
+        LEFT JOIN products p ON ch.id = p.chat_id
+        WHERE ch.user = ?
+        ORDER BY ch.id DESC
+    """, (session["user"],)).fetchall()
+    conn.close()
 
-    # try loading persisted suggestions from the product row
     suggested = []
     if chat_id:
         _, _, stored = get_product_info(chat_id)
@@ -1185,19 +1194,20 @@ def dashboard():
                 suggested = json.loads(stored)
             except:
                 suggested = []
+
     if not suggested:
         suggested = session.get("suggested_industry", [])
+
     city = session.get("selected_city", "")
 
-    print("Dashboard industries:", suggested)   # DEBUG
-
     return render_template(
-    "dashboard.html",
-    companies=companies,
-    suggested_industry=suggested,
-    city=city,
-    active_page="dashboard"
-)
+        "dashboard.html",
+        companies=companies,
+        suggested_industry=suggested,
+        city=city,
+        projects=projects,   # ⭐ NEW
+        active_page="dashboard"
+    )
 
 
 @app.route("/savedprojects")
