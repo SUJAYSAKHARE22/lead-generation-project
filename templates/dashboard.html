@@ -74,12 +74,12 @@
     color:var(--accent);
     text-decoration:none;
 }
-
-
 </style>
 {% endblock %}
 
+
 {% block content %}
+
 <div class="top">
     <h2>Lead Intelligence</h2>
 </div>
@@ -106,11 +106,59 @@
     <input name="city" value="{{ city }}" required>
 
     <button type="submit">Find Companies</button>
+
 </form>
+
+
+<!-- ========================= -->
+<!-- PROJECT CARDS SECTION -->
+<!-- ========================= -->
+
+<h2 style="margin-top:10px;margin-bottom:20px;">📁 Your Projects</h2>
+
+<div class="grid">
+
+{% for p in projects %}
+<div class="card">
+
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+
+{% set logo_path = 'project_logos/' ~ p[0] ~ '.png' %}
+
+<img src="{{ url_for('static', filename=logo_path) }}"
+     onerror="this.src='{{ url_for('static', filename='project_logos/default.png') }}'"
+     style="width:45px;height:45px;border-radius:10px;object-fit:cover;">
+
+<div>
+<strong>{{ p[1] }}</strong>
+<p style="font-size:13px;color:var(--soft);margin:0;">
+{{ p[2] }}
+</p>
+</div>
+
+</div>
+
+<button onclick="location.href='/open_project/{{p[0]}}'"
+        style="margin-top:10px;padding:10px 16px;border-radius:10px;border:none;background:var(--accent);color:white;cursor:pointer;">
+Open Project
+</button>
+
+</div>
+{% endfor %}
+
+</div>
+
+
+<!-- ========================= -->
+<!-- COMPANY LEADS SECTION -->
+<!-- ========================= -->
+
+<h2 style="margin-top:40px;margin-bottom:20px;">🏢 Company Leads</h2>
 
 <div class="grid">
     {% for c in companies %}
     <div class="card">
+
         <h3>{{ c.name }}</h3>
 
         {% if c.rating %}
@@ -130,7 +178,9 @@
         {% if c.company_linkedin %}
         <p><a href="{{ c.company_linkedin }}" target="_blank">🏢 Company LinkedIn</a></p>
         {% endif %}
+
     </div>
     {% endfor %}
 </div>
+
 {% endblock %}
