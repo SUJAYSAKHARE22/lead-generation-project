@@ -106,10 +106,29 @@ color:#94a3b8;
 <h1>LeadPilotGen6</h1>
 <p class="sub">Next-Gen AI Lead Intelligence Platform</p>
 
-<form method="POST">
-<input type="text" name="username" placeholder="Username" required>
+<form method="POST" onsubmit="return validateCaptcha()">
+
+<input type="email" name="username" placeholder="Personal Email" required>
+
 <input type="password" name="password" placeholder="Password" required>
+
+<!-- CAPTCHA DISPLAY -->
+
+<div style="
+background:rgba(255,255,255,0.1);
+padding:10px;
+border-radius:10px;
+margin-bottom:10px;
+font-size:20px;
+letter-spacing:4px;
+font-weight:600;
+color:#818cf8;
+" id="captchaBox"></div>
+
+<input type="text" id="captchaInput" placeholder="Enter Captcha" required>
+
 <button type="submit">Access Dashboard</button>
+
 </form>
 
 <div style="margin-top:18px;font-size:13px;color:#94a3b8;">
@@ -126,5 +145,46 @@ Secure Encrypted Access
 
 </div>
 
+<script>
+
+let captchaText = "";
+
+function generateCaptcha(){
+
+let chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+captchaText = "";
+
+for(let i=0;i<5;i++){
+
+captchaText += chars.charAt(Math.floor(Math.random()*chars.length));
+
+}
+
+document.getElementById("captchaBox").innerText = captchaText;
+
+}
+
+function validateCaptcha(){
+
+let userCaptcha = document.getElementById("captchaInput").value;
+
+if(userCaptcha !== captchaText){
+
+alert("Incorrect captcha");
+
+generateCaptcha();
+
+return false;
+
+}
+
+return true;
+
+}
+
+generateCaptcha();
+
+</script>
 </body>
 </html>
