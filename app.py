@@ -31,7 +31,7 @@ app.secret_key = "tars_stable_system"
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
-SERP_API_KEY = ""
+SERP_API_KEY = "702c63ae7215840ef169436872c89fcfb19913954d04015f015bb025eeaf1bf9"
 
 @app.context_processor
 def inject_active_page():
@@ -766,7 +766,8 @@ def get_user_chats():
     conn = get_db_connection()
 
     rows = conn.execute(
-        "SELECT id, title FROM chats ORDER BY id DESC"
+        "SELECT id, title FROM chats WHERE user=? ORDER BY id DESC",
+         (current_user.username,)
     ).fetchall()
 
     conn.close()
@@ -775,12 +776,19 @@ def get_user_chats():
 
 
 def get_chat_messages(chat_id):
+
     conn = get_db_connection()
-    rows = conn.execute(
-        "SELECT role, content, timestamp FROM messages WHERE chat_id=? ORDER BY id ASC",
-        (chat_id,)
-    ).fetchall()
+
+    rows = conn.execute("""
+        SELECT m.role, m.content, m.timestamp
+        FROM messages m
+        JOIN chats ch ON m.chat_id = ch.id
+        WHERE m.chat_id = ? AND ch.user = ?
+        ORDER BY m.id ASC
+    """, (chat_id, current_user.username)).fetchall()
+
     conn.close()
+
     return rows
 
 
@@ -806,8 +814,8 @@ def industry_viewed():
         FROM products p
         JOIN chats ch ON p.chat_id = ch.id
         LEFT JOIN companies c ON ch.id = c.chat_id
-        
-    """,).fetchall()
+        WHERE ch.user = ?
+    """,(current_user.username,)).fetchall()
     conn.close()
 
     if not data:
@@ -1273,7 +1281,7 @@ def dashboard():
         LEFT JOIN products p ON ch.id = p.chat_id
         WHERE ch.user = ?
         ORDER BY ch.id DESC
-    """, (session["user"],)).fetchall()
+    """, (current_user.username,)).fetchall()
     conn.close()
 
     suggested = []
@@ -1310,9 +1318,9 @@ def saved_projects():
         SELECT ch.id, ch.title, p.description
         FROM chats ch
         LEFT JOIN products p ON ch.id = p.chat_id
-        
+        WHERE ch.user = ?
         ORDER BY ch.id DESC
-    """,).fetchall()
+    """, (current_user.username,)).fetchall()
     conn.close()
 
     return render_template("savedprojects.html", chats=rows, active_page="product")
@@ -1343,8 +1351,8 @@ def export_excel():
 
     conn = get_db_connection()
     row = conn.execute(
-        "SELECT title FROM chats WHERE id=?",
-        (chat_id,)
+        "SELECT title FROM chats WHERE id=? AND user=?",
+        (chat_id, current_user.username)
     ).fetchone()
     conn.close()
 
@@ -1388,9 +1396,9 @@ def call_for_action():
         SELECT ch.id, ch.title, p.description
         FROM chats ch
         LEFT JOIN products p ON ch.id = p.chat_id
-        
+        WHERE ch.user = ?
         ORDER BY ch.id DESC
-    """,).fetchall()
+    """,(current_user.username,)).fetchall()
 
     projects = []
     for chat_id, title, description in rows:
@@ -1439,9 +1447,9 @@ def overview():
         SELECT ch.id, ch.title, p.description
         FROM chats ch
         LEFT JOIN products p ON ch.id = p.chat_id
-        
+        WHERE ch.user = ?
         ORDER BY ch.id DESC
-    """,).fetchall()
+    """,(current_user.username,)).fetchall()
     conn.close()
 
     return render_template("overview.html", projects=rows, active_page="overview")
@@ -1455,12 +1463,13 @@ def overview_project(chat_id):
     conn = get_db_connection()
 
     companies = conn.execute("""
-        SELECT id, name, website, phone, address, rating,
-               description, email, ceo,
-               company_linkedin, leadership_linkedin, status
-        FROM companies
-        WHERE chat_id = ?
-    """, (chat_id,)).fetchall()
+    SELECT c.id, c.name, c.website, c.phone, c.address, c.rating,
+           c.description, c.email, c.ceo,
+           c.company_linkedin, c.leadership_linkedin, c.status
+    FROM companies c
+    JOIN chats ch ON c.chat_id = ch.id
+    WHERE c.chat_id = ? AND ch.user = ?
+""", (chat_id, current_user.username)).fetchall()
 
     conn.close()
 
@@ -1602,8 +1611,10 @@ def get_company_project_matches():
         SELECT ch.title, p.description
         FROM chats ch
         LEFT JOIN products p ON ch.id = p.chat_id
+        WHERE ch.user = ?
+
         ORDER BY ch.id DESC
-""").fetchall()
+""", (current_user.username,)).fetchall()
 
     conn.close()
 
