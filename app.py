@@ -31,7 +31,7 @@ app.secret_key = "tars_stable_system"
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
-SERP_API_KEY = "702c63ae7215840ef169436872c89fcfb19913954d04015f015bb025eeaf1bf9"
+SERP_API_KEY = ""
 
 @app.context_processor
 def inject_active_page():
@@ -890,26 +890,51 @@ def signup():
 
     if request.method == "POST":
 
-        username = request.form["username"]
+        name = request.form["name"]
+        phone = request.form["phone"]
+        email = request.form["email"]
         password = request.form["password"]
+        confirm_password = request.form["confirm_password"]
+
+        company_name = request.form["company_name"]
+        employees = request.form["employees"]
+        location = request.form["location"]
+        company_email = request.form["company_email"]
+        company_phone = request.form["company_phone"]
+
+        # password check
+        if password != confirm_password:
+            return "Passwords do not match"
 
         hashed_password = generate_password_hash(password)
 
         conn = get_db_connection()
 
         try:
-            conn.execute(
-                "INSERT INTO users (username,password) VALUES (?,?)",
-                (username, hashed_password)
-            )
+
+            conn.execute("""
+            INSERT INTO users (username,password)
+            VALUES (?,?)
+            """,(email,hashed_password))
+
             conn.commit()
 
         except:
+            conn.close()
             return "User already exists"
+
+        user = conn.execute(
+            "SELECT id, username FROM users WHERE username=?",
+            (email,)
+        ).fetchone()
 
         conn.close()
 
-        return redirect("/")
+        # auto login
+        user_obj = User(user[0], user[1])
+        login_user(user_obj)
+
+        return redirect("/dashboard")
 
     return render_template("signup.html")
 
@@ -931,15 +956,23 @@ def login():
 
         conn.close()
 
-        if user and check_password_hash(user[2], password):
+        # USER DOES NOT EXIST
+        if not user:
+            return "You don't have an account. Please sign up first."
 
-            user_obj = User(user[0], user[1])
+        # PASSWORD WRONG
+        if not check_password_hash(user[2], password):
+            return "Incorrect password."
 
-            login_user(user_obj)
+        # LOGIN SUCCESS
+        user_obj = User(user[0], user[1])
+        login_user(user_obj)
+        # CLEAR previous session data
+        session.pop("active_chat", None)
+        session.pop("suggested_industry", None)
+        session.pop("selected_city", None)
 
-            return redirect("/dashboard")
-
-        return "Invalid username or password"
+        return redirect("/dashboard")
 
     return render_template("login.html")
 # ===============================
@@ -1271,7 +1304,7 @@ def dashboard():
     
 
     chat_id = session.get("active_chat")
-    companies = get_companies(chat_id)
+    companies = get_companies(chat_id) if chat_id else []
 
     # load projects list
     conn = get_db_connection()
@@ -1293,8 +1326,7 @@ def dashboard():
             except:
                 suggested = []
 
-    if not suggested:
-        suggested = session.get("suggested_industry", [])
+    
 
     city = session.get("selected_city", "")
 
