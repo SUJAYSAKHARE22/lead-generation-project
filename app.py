@@ -31,7 +31,7 @@ app.secret_key = "tars_stable_system"
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
-SERP_API_KEY = ""
+SERP_API_KEY = "b6eee82776bb954560718c2bce860251638c2cc5dce73e44a2bc4868a5494fcc"
 
 @app.context_processor
 def inject_active_page():
@@ -562,75 +562,69 @@ def format_chat_html(text):
         out.append('</ul>')
     return '<br>'.join(out)
 
+def chat_html_to_text(content):
+    """Convert stored chat HTML into plain text before sending to the model."""
+    if not content:
+        return ""
+    text = re.sub(r"<br\s*/?>", "\n", content, flags=re.I)
+    text = re.sub(r"</?(ul|ol)\b[^>]*>", "\n", text, flags=re.I)
+    text = re.sub(r"<li\b[^>]*>", "- ", text, flags=re.I)
+    text = re.sub(r"</li>", "\n", text, flags=re.I)
+    text = re.sub(r"<[^>]+>", "", text)
+    import html as _html
+    text = _html.unescape(text)
+    return re.sub(r"\n{3,}", "\n\n", text).strip()
+
 # ===============================
 # CHAT HELPERS (NEW)
 # ===============================
 def generate_sales_ai_reply(chat_id, user_message):
     try:
         previous_messages = get_chat_messages(chat_id)
+        product_name, product_description, _ = get_product_info(chat_id)
 
-# The system message defines how the assistant behaves.  It should act
-        # like ChatGPT – listening to the entire conversation, sensing intent,
-        # and replying as a friendly, confident human mentor rather than a
-        # rigid workflow engine.
         conversation = [
             {
                 "role": "system",
-                "content": """
-                You are an AI assistant very much like ChatGPT, taking on the role of a
-                seasoned startup sales strategist chatting with a founder.
-
-                Your responses should always consider all prior messages in the
-                conversation.  Internally determine the user’s intent and craft
-                full, context-aware replies that sound natural and unforced.
-
-                Do NOT behave like a form-filling bot, and do NOT give the user
-                command‑style instructions such as "say X when ready" or "type the
-                word 'suggest industries'."  Speak as if you were talking to a
-                friend – confident, relaxed, and adaptive to the user’s tone.
-
-                You may gently steer the conversation when appropriate.  For
-                example, once you have enough information about a project, it's
-                fine to proactively offer industry suggestions or advice without
-                waiting for the user to use a magic phrase.  But always stay
-                conversational and avoid sounding like a checklist.
-
-                Possible intents include greeting, casual chatter, mentioning a
-                project or idea, providing a project name/description, asking for
-                advice, or asking about target markets or industries.
-
-                Your job is to:
-                1. Identify the intent before replying.
-                2. Respond in full sentences with a ChatGPT-like tone.
-                3. Ask at most one simple, conversational follow-up question if
-                   you need more details.
-                4. Avoid long lists or structure unless the user specifically
-                   requests it.
-                5. Transition naturally from understanding the project to offering
-                   suggestions or next steps when the moment feels right.
-                """
+                "content": (
+                    "You are a highly interactive AI sales strategist and startup advisor. "
+                    "Understand the user's message semantically even when phrased in different words. "
+                    "Use conversation context to give specific, non-repetitive answers. "
+                    "Never act like a rigid form bot and never ask for magic trigger phrases. "
+                    "If details are missing, ask one short follow-up question. "
+                    "Keep responses practical, clear, and conversational."
+                ),
             }
         ]
 
-        for role, content, _ in previous_messages:
-            conversation.append({"role": role, "content": content})
+        if product_name or product_description:
+            product_context = (
+                f"Known project context:\n"
+                f"- Product name: {product_name or 'Not provided'}\n"
+                f"- Product description: {product_description or 'Not provided'}"
+            )
+            conversation.append({"role": "system", "content": product_context})
 
-        conversation.append({"role": "user", "content": user_message})
+        for role, content, _ in previous_messages[-20:]:
+            if role not in ("user", "assistant", "system"):
+                continue
+            clean_content = chat_html_to_text(content)
+            if clean_content:
+                conversation.append({"role": role, "content": clean_content})
 
-        # allow longer replies so the assistant can craft full ChatGPT-style
-        # paragraphs when appropriate
+        conversation.append({"role": "user", "content": user_message.strip()})
+
         completion = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=conversation,
-            temperature=0.9,
-            max_tokens=500
+            temperature=0.5,
+            max_tokens=500,
         )
 
         return completion.choices[0].message.content.strip()
-
     except Exception as e:
         print("Sales AI Error:", e)
-        return "Tell me more about what you're building."
+        return "Tell me a bit more about what you're building and what kind of help you want."
 
 
 def get_product_info(chat_id):
@@ -956,19 +950,32 @@ def login():
 
         conn.close()
 
-        # USER DOES NOT EXIST
         if not user:
             return "You don't have an account. Please sign up first."
 
-        # PASSWORD WRONG
         if not check_password_hash(user[2], password):
             return "Incorrect password."
 
-        # LOGIN SUCCESS
         user_obj = User(user[0], user[1])
         login_user(user_obj)
-        # CLEAR previous session data
-        session.pop("active_chat", None)
+
+        conn = get_db_connection()
+
+        row = conn.execute("""
+        SELECT id
+        FROM chats
+        WHERE user = ?
+        ORDER BY id DESC
+        LIMIT 1
+        """, (username,)).fetchone()
+
+        conn.close()
+
+        if row:
+            session["active_chat"] = row[0]
+        else:
+            session.pop("active_chat", None)
+
         session.pop("suggested_industry", None)
         session.pop("selected_city", None)
 
@@ -1082,127 +1089,33 @@ def chat_session(chat_id):
 
 @app.route("/send_message", methods=["POST"])
 def send_message():
-    chat_id = request.form["chat_id"]
-    message = request.form["message"]
+    chat_id = int(request.form["chat_id"])
+    message = request.form.get("message", "").strip()
+    if not message:
+        return redirect(f"/chat_session/{chat_id}")
 
-    # helper for assistant replies defined here so it can access send_message scope
-    def save_assistant_reply(chat_id, reply):
-        save_message(chat_id, "assistant", format_chat_html(reply))
-        inds = extract_industries_from_text(reply)
-        if inds:
-            session["suggested_industry"] = inds
-            import json as _json
-            upsert_product(chat_id, industry_suggestions=_json.dumps(inds))
+    conn = get_db_connection()
+    row = conn.execute(
+        "SELECT 1 FROM chats WHERE id=? AND user=?",
+        (chat_id, current_user.username)
+    ).fetchone()
+    conn.close()
+    if not row:
+        return redirect("/chat")
 
-    # persist the user's message (format for HTML)
     save_message(chat_id, "user", format_chat_html(message))
 
-    # Conversation phase is stored per-chat in the session
-    phase_key = f"phase_{chat_id}"
-    phase = session.get(phase_key, "greeting")
+    ai_reply = generate_sales_ai_reply(chat_id, message)
+    save_message(chat_id, "assistant", format_chat_html(ai_reply))
 
-    # Normalize incoming message
-    msg_text = message.strip()
+    inds = extract_industries_from_text(ai_reply)
+    if inds:
+        session["suggested_industry"] = inds
+        import json as _json
+        upsert_product(chat_id, industry_suggestions=_json.dumps(inds))
 
-    # Phase: greeting -> detect whether user mentions a project
-    if phase == "greeting":
-        if user_mentions_project(msg_text):
-            # try to guess a name if it's embedded in the message
-            name = extract_project_name(msg_text)
-            if name:
-                session[f"project_name_{chat_id}"] = name
-                upsert_product(chat_id, product_name=name)
-                reply = f"{name} sounds interesting! Tell me more about what it does and who uses it."
-            else:
-                reply = "Oh nice – tell me about the project you're working on."
-            session[phase_key] = "project_details"
-        else:
-            reply = "Hey there! I’m your sales strategist – what’s on your mind today?"
-
-        save_assistant_reply(chat_id, reply)
-        return redirect(f"/chat_session/{chat_id}")
-
-    # Phase: expecting full project details
-    if phase == "project_details":
-        # if user asks about industries before giving the description, handle it
-        if user_requests_industry_suggestions(msg_text):
-            pname, pdesc, _ = get_product_info(chat_id)
-            if not pdesc:
-                reply = "I haven't got a description of the project yet – could you tell me a bit about it first?"
-                save_assistant_reply(chat_id, reply)
-                return redirect(f"/chat_session/{chat_id}")
-
-            industries = suggest_industries(pdesc)
-            reasons = [f"{ind}: seems relevant based on what you've shared." for ind in industries]
-            reply = "Here are some industries I’d target:\n" + "\n".join(reasons)
-            session["suggested_industry"] = industries
-            import json as _json
-            upsert_product(chat_id, industry_suggestions=_json.dumps(industries))
-            save_assistant_reply(chat_id, reply)
-            # remain in project_details so user can continue description if desired
-            return redirect(f"/chat_session/{chat_id}")
-
-        # otherwise treat message as project description
-        project_description = msg_text
-        session[f"project_description_{chat_id}"] = project_description
-        upsert_product(chat_id, description=project_description)
-
-        # Summarize understanding and also give an immediate industry hint
-        pname, pdesc, _ = get_product_info(chat_id)
-        industries = suggest_industries(pdesc)
-        industry_msg = ""
-        if industries:
-            reasons = [f"{ind}: seems relevant based on the product focus." for ind in industries]
-            industry_msg = "\n\nBy the way, here are a few industries that look like a good fit:\n" + "\n".join(reasons)
-            # store suggestions as well
-            import json as _json
-            session["suggested_industry"] = industries
-            upsert_product(chat_id, industry_suggestions=_json.dumps(industries))
-
-        summary = (
-            "Thanks for sharing! Here's how I understand it:\n"
-            f"– Project: {pname or '(no name)'}\n"
-            f"– Description: {pdesc[:800] if pdesc else '(no description)'}"
-            f"{industry_msg}\n\n"
-            "I've saved that for you.  If you'd like more ideas or help on next steps, just say the word – I'm here."
-        )
-
-        session[phase_key] = "idle"
-        save_assistant_reply(chat_id, summary)
-        return redirect(f"/chat_session/{chat_id}")
-
-    # Phase: idle / project understood — let LLM handle general chit‑chat; only
-    # intercept when the user *explicitly* wants industry ideas.
-    if phase in ("idle", "project_understood"):
-        if user_requests_industry_suggestions(msg_text):
-            pname, pdesc, _ = get_product_info(chat_id)
-            if not pdesc:
-                reply = "I don't have a project description saved yet — could you tell me a bit about it first?"
-                save_assistant_reply(chat_id, reply)
-                return redirect(f"/chat_session/{chat_id}")
-
-            # let the LLM craft a more descriptive reply, but always fall back
-            # to a deterministic list if parsing fails
-            ai_reply = generate_sales_ai_reply(chat_id, msg_text)
-            inds = extract_industries_from_text(ai_reply)
-            if not inds:
-                inds = suggest_industries(pdesc)
-            session["suggested_industry"] = inds
-            import json as _json
-            upsert_product(chat_id, industry_suggestions=_json.dumps(inds))
-            save_assistant_reply(chat_id, ai_reply)
-            return redirect(f"/chat_session/{chat_id}")
-
-        # otherwise defer to the model for a natural conversational answer
-        ai_reply = generate_sales_ai_reply(chat_id, msg_text)
-        save_assistant_reply(chat_id, ai_reply)
-        return redirect(f"/chat_session/{chat_id}")
-
-    # Fallback: if phase unknown, reset to greeting and respond warmly
-    session[phase_key] = "greeting"
-    fallback = "Hey — tell me if you're building something, or ask me to review a project."
-    save_message(chat_id, "assistant", format_chat_html(fallback))
     return redirect(f"/chat_session/{chat_id}")
+
 
 @app.route("/delete_project/<int:chat_id>", methods=["POST"])
 @login_required
