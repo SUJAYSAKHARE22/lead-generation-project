@@ -67,6 +67,26 @@ left:0;
 top:0;
 height:100vh;
 }
+
+.main-sidebar .menu-toggle{
+width:42px;
+height:42px;
+display:flex;
+align-items:center;
+justify-content:center;
+margin-bottom:14px;
+padding:0;
+border:none;
+border-radius:10px;
+background:var(--surface);
+color:var(--text);
+cursor:pointer;
+}
+
+.main-sidebar .menu-toggle:hover{
+background:var(--accent);
+color:white;
+}
 /* collapsed width override */
 
 .projects-sidebar{
@@ -370,8 +390,7 @@ body.light .sidebar[style*="#111827"]{
 
 
 /* =====================================================
-   CLEAN COLLAPSE SYSTEM (FINAL)
-   Left menu shrinks + Projects show logos only
+   BOTH SIDEBARS COLLAPSE SYSTEM
 ===================================================== */
 
 /* Collapse LEFT MAIN SIDEBAR */
@@ -392,25 +411,21 @@ body.sidebar-collapsed .main-sidebar a{
     justify-content:center;
 }
 
-
-/* ===== PROJECT SIDEBAR (LOGO MODE) ===== */
-
+/* Collapse PROJECT SIDEBAR */
 body.sidebar-collapsed .projects-sidebar{
     width:90px;
-    left:70px;            /* move beside collapsed main sidebar */
+    left:70px;
     padding:20px 6px;
     display:flex;
     flex-direction:column;
     align-items:center;
 }
 
-/* Show title small */
 body.sidebar-collapsed .projects-sidebar h2{
     font-size:13px;
     margin-bottom:10px;
 }
 
-/* New Project button becomes square */
 body.sidebar-collapsed .projects-sidebar button{
     width:44px;
     height:44px;
@@ -419,14 +434,13 @@ body.sidebar-collapsed .projects-sidebar button{
     align-items:center;
     justify-content:center;
     border-radius:12px;
-    font-size:0;              /* hide text */
+    font-size:0;
 }
 
 body.sidebar-collapsed .projects-sidebar button i{
     font-size:18px;
 }
 
-/* Project item = logo only */
 body.sidebar-collapsed .projects-sidebar .chat-item{
     width:44px;
     height:44px;
@@ -436,60 +450,82 @@ body.sidebar-collapsed .projects-sidebar .chat-item{
     align-items:center;
 }
 
-/* Hide project names */
 body.sidebar-collapsed .projects-sidebar .chat-item span{
     display:none;
 }
 
-/* Logo size */
 body.sidebar-collapsed .projects-sidebar .chat-logo{
     width:28px;
     height:28px;
 }
 
-
+/* Main content adjusts when both sidebars collapsed */
 body.sidebar-collapsed .main{
-    margin-left:160px;   /* 70px main + 90px projects */
+    margin-left:160px;
 }
 
-
-/* ===== Toggle Button Position ===== */
-
-.sidebar-toggle{
-    position:fixed;
-    top:20px;
-    left:270px;
-    z-index:9999;
-    background:var(--card);
-    color:var(--text);
-    border:none;
-    padding:10px 12px;
-    border-radius:8px;
-    cursor:pointer;
+/* Collapse only PROJECT SIDEBAR (base sidebar stays open) */
+body.projects-collapsed:not(.sidebar-collapsed) .projects-sidebar{
+    width:90px;
+    left:260px;
+    padding:20px 6px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
 }
 
-body.sidebar-collapsed .sidebar-toggle{
-    left:80px;
-}
-/* Prevent overlap with toggle button */
-.projects-sidebar{
-    padding-top:80px;   /* creates space for toggle button */
+body.projects-collapsed:not(.sidebar-collapsed) .projects-sidebar h2{
+    font-size:13px;
+    margin-bottom:10px;
 }
 
-body.sidebar-collapsed .projects-sidebar{
-    padding-top:80px;   /* same spacing when collapsed */
+body.projects-collapsed:not(.sidebar-collapsed) .projects-sidebar button{
+    width:44px;
+    height:44px;
+    padding:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:12px;
+    font-size:0;
+}
+
+body.projects-collapsed:not(.sidebar-collapsed) .projects-sidebar button i{
+    font-size:18px;
+}
+
+body.projects-collapsed:not(.sidebar-collapsed) .projects-sidebar .chat-item{
+    width:44px;
+    height:44px;
+    padding:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+body.projects-collapsed:not(.sidebar-collapsed) .projects-sidebar .chat-item span{
+    display:none;
+}
+
+body.projects-collapsed:not(.sidebar-collapsed) .projects-sidebar .chat-logo{
+    width:28px;
+    height:28px;
+}
+
+body.projects-collapsed:not(.sidebar-collapsed) .main{
+    margin-left:350px;
 }
 </style>
 </head>
 
 <body>
-<button class="sidebar-toggle" onclick="toggleSidebar()">
-    <i class="fas fa-bars"></i>
-</button>
 <!-- ================= DASHBOARD SIDEBAR ================= -->
 
 <div class="sidebar main-sidebar">
-<h2>🚀 LeadPilotGen6</h2>
+<button class="menu-toggle" type="button" onclick="toggleSidebars()">
+    <i class="fas fa-bars"></i>
+</button>
+<h2>LeadPilotGen6</h2>
 <a href="/dashboard" class="{% if active_page == 'dashboard' %}active{% endif %}">
     <i class="fas fa-chart-line"></i>
     <span>Dashboard</span>
@@ -850,8 +886,9 @@ function toggleTheme() {
         }
     }
 }
-// Sidebar toggle (shared behavior)
-function toggleSidebar(){
+
+// Toggle both sidebars
+function toggleSidebars(){
     document.body.classList.toggle("sidebar-collapsed");
 
     if(document.body.classList.contains("sidebar-collapsed")){
@@ -861,11 +898,45 @@ function toggleSidebar(){
     }
 }
 
+function toggleProjectsSidebar(){
+    document.body.classList.toggle("projects-collapsed");
+
+    if(document.body.classList.contains("projects-collapsed")){
+        localStorage.setItem("projects-sidebar","closed");
+    }else{
+        localStorage.setItem("projects-sidebar","open");
+    }
+}
+
 // Restore state
 window.addEventListener("DOMContentLoaded", function(){
-    const state = localStorage.getItem("sidebar");
-    if(state === "closed"){
+    const sidebarState = localStorage.getItem("sidebar");
+    if(sidebarState === "closed"){
         document.body.classList.add("sidebar-collapsed");
+    }
+
+    const projectsSidebarState = localStorage.getItem("projects-sidebar");
+    if(projectsSidebarState === "closed"){
+        document.body.classList.add("projects-collapsed");
+    }
+    
+    // Double-click on base sidebar collapses both sidebars
+    const baseSidebar = document.querySelector(".main-sidebar");
+    if (baseSidebar) {
+        baseSidebar.addEventListener("dblclick", function(e){
+            if (!e.target.closest("a")) {
+                toggleSidebars();
+            }
+        });
+    }
+
+    const projectsSidebar = document.querySelector(".projects-sidebar");
+    if (projectsSidebar) {
+        projectsSidebar.addEventListener("dblclick", function(e){
+            if (!e.target.closest(".chat-item") && !e.target.closest("button")) {
+                toggleProjectsSidebar();
+            }
+        });
     }
 });
 </script>

@@ -57,6 +57,12 @@
         height:100vh;
         overflow-y:auto;
         scrollbar-gutter:stable;
+        transition: transform 0.3s ease;
+        z-index: 1000;
+    }
+
+    body.sidebar-collapsed .sidebar{
+        transform: translateX(-260px);
     }
 
     .sidebar h2{
@@ -90,6 +96,30 @@
         margin-left:260px;
         width:100%;
         padding:40px;
+        transition: margin-left 0.3s ease;
+    }
+
+    body.sidebar-collapsed .page-content{
+        margin-left: 0;
+    }
+
+    /* TOGGLE BUTTON */
+    .sidebar-toggle{
+        position:fixed;
+        top:20px;
+        left:270px;
+        z-index:9999;
+        background:var(--card);
+        color:var(--text);
+        border:none;
+        padding:10px 12px;
+        border-radius:8px;
+        cursor:pointer;
+        transition: left 0.3s ease;
+    }
+
+    body.sidebar-collapsed .sidebar-toggle{
+        left:20px;
     }
     /* Active sidebar menu — GLOBAL (must be in base.html) */
 .sidebar a.active{
@@ -109,6 +139,10 @@
 
 <body>
 
+<button class="sidebar-toggle" onclick="toggleSidebar()">
+    <i class="fas fa-bars"></i>
+</button>
+
 {% include "sidebar.html" %}
 
 <div class="page-content">
@@ -123,7 +157,36 @@ document.addEventListener("DOMContentLoaded", function () {
     if (savedTheme === "light") {
         document.body.classList.add("light");
     }
+    
+    // Restore sidebar state
+    const sidebarState = localStorage.getItem("sidebar");
+    if (sidebarState === "closed") {
+        document.body.classList.add("sidebar-collapsed");
+    }
 });
+
+// Add double-click handler to entire document for sidebar area
+document.addEventListener("dblclick", function(e){
+    const sidebar = document.querySelector(".sidebar");
+    if (sidebar && sidebar.contains(e.target)) {
+        // Check if clicked on a link - if so, don't toggle
+        if (!e.target.closest(".sidebar a")) {
+            toggleSidebar();
+            e.stopPropagation();
+        }
+    }
+}, true);
+
+// Toggle sidebar function
+function toggleSidebar(){
+    document.body.classList.toggle("sidebar-collapsed");
+
+    if(document.body.classList.contains("sidebar-collapsed")){
+        localStorage.setItem("sidebar","closed");
+    }else{
+        localStorage.setItem("sidebar","open");
+    }
+}
 </script>
 </body>
 </html>

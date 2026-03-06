@@ -25,7 +25,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app = Flask(__name__)
 app.secret_key = "tars_stable_system"
 
-SERP_API_KEY = ""
+SERP_API_KEY = "a1af308b83dfea02d95471c748653dd3e8c0e726e9888e7a810beea2dcc424c9"
 
 @app.context_processor
 def inject_active_page():
