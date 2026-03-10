@@ -118,6 +118,61 @@ color:var(--soft);
 color:var(--accent);
 text-decoration:none;
 }
+
+/* Confirmation modal */
+.confirm-modal-content{
+background:var(--card);
+width:380px;
+max-width:90%;
+padding:30px;
+border-radius:20px;
+text-align:center;
+}
+
+.confirm-modal-content h3{
+margin-bottom:12px;
+font-size:18px;
+}
+
+.confirm-modal-content p{
+color:var(--soft);
+margin-bottom:24px;
+font-size:14px;
+}
+
+.confirm-actions{
+display:flex;
+gap:12px;
+justify-content:center;
+}
+
+.confirm-actions button{
+padding:10px 28px;
+border:none;
+border-radius:12px;
+cursor:pointer;
+font-size:14px;
+font-weight:600;
+transition:0.2s;
+}
+
+.confirm-yes{
+background:#ef4444;
+color:white;
+}
+
+.confirm-yes:hover{
+background:#dc2626;
+}
+
+.confirm-no{
+background:var(--accent);
+color:white;
+}
+
+.confirm-no:hover{
+background:#4f46e5;
+}
 </style>
 {% endblock %}
 
@@ -167,6 +222,9 @@ text-decoration:none;
 {% endfor %}
 </div>
 
+<!-- ========================= -->
+<!-- COMPANY DETAIL MODAL -->
+<!-- ========================= -->
 <div id="companyModal" class="modal">
 <div class="modal-content">
 <div class="close-btn" onclick="closeModal()">✖</div>
@@ -181,14 +239,31 @@ text-decoration:none;
 <div id="crossProjectMatch" style="margin-top:12px;color:var(--soft);font-size:14px;"></div>
 </div>
 </div>
+
+<!-- ========================= -->
+<!-- DECLINE CONFIRMATION MODAL -->
+<!-- ========================= -->
+<div id="confirmModal" class="modal" style="z-index:1000;">
+<div class="confirm-modal-content">
+    <h3>⚠️ Are you sure?</h3>
+    <p>Do you really want to decline <strong id="confirmCompanyName"></strong>? This will mark them as not acceptable.</p>
+    <div class="confirm-actions">
+        <button class="confirm-yes" onclick="confirmDecline()">Yes, Decline</button>
+        <button class="confirm-no" onclick="cancelDecline()">No, Go Back</button>
+    </div>
+</div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
 let currentCompanyId = null;
+let currentCompanyName = "";
 
-function openPopup(id,name,website,phone,address,rating,desc,email){
+function openPopup(id, name, website, phone, address, rating, desc, email){
     currentCompanyId = id;
+    currentCompanyName = name;
     document.getElementById("modalName").innerText = name;
     document.getElementById("modalDetails").innerHTML = `
         <p><strong>Description:</strong> ${desc || "-"}</p>
@@ -199,7 +274,6 @@ function openPopup(id,name,website,phone,address,rating,desc,email){
         ${website ? `<p><a href="${website}" target="_blank">Visit Website</a></p>` : ""}
     `;
 
-    // NEW PART — Fetch matching projects
     fetch(`/get_company_project_matches?company_id=${id}`)
     .then(res => res.json())
     .then(data => {
@@ -212,14 +286,34 @@ function openPopup(id,name,website,phone,address,rating,desc,email){
         }
     });
 
-    document.getElementById("companyModal").style.display="flex";
+    document.getElementById("companyModal").style.display = "flex";
 }
 
 function closeModal(){
-    document.getElementById("companyModal").style.display="none";
+    document.getElementById("companyModal").style.display = "none";
 }
 
 function setStatus(status){
+    if(status === 'declined'){
+        // Show confirmation popup
+        document.getElementById("confirmCompanyName").innerText = currentCompanyName;
+        document.getElementById("confirmModal").style.display = "flex";
+        return;
+    }
+    sendStatus(status);
+}
+
+function confirmDecline(){
+    document.getElementById("confirmModal").style.display = "none";
+    sendStatus('declined');
+}
+
+function cancelDecline(){
+    document.getElementById("confirmModal").style.display = "none";
+    // Stay on company modal — do nothing
+}
+
+function sendStatus(status){
     fetch("/update_status", {
         method: "POST",
         headers: {
@@ -227,8 +321,27 @@ function setStatus(status){
         },
         body: `company_id=${currentCompanyId}&status=${status}`
     }).then(()=>{
-        location.reload();
+        if(status === 'cta'){
+            showToast("✅ Successfully added to Call For Action!");
+            setTimeout(()=>{ location.reload(); }, 1500);
+        } else {
+            location.reload();
+        }
     });
+}
+
+function showToast(message){
+    const toast = document.createElement("div");
+    toast.innerText = message;
+    toast.style.cssText = `
+        position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
+        background:#16a34a; color:white; padding:12px 24px;
+        border-radius:12px; font-size:14px; font-weight:600;
+        z-index:9999; box-shadow:0 4px 12px rgba(0,0,0,0.3);
+        animation: fadeIn 0.3s ease;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(()=> toast.remove(), 1500);
 }
 
 function filterStatus(status){
@@ -242,10 +355,11 @@ function filterStatus(status){
     });
 }
 
-window.onclick=function(e){
-    if(e.target.classList.contains("modal")){
+window.onclick = function(e){
+    if(e.target.id === "companyModal"){
         closeModal();
     }
+    // Clicking outside confirm modal does nothing (user must choose Yes or No)
 }
 </script>
 {% endblock %}

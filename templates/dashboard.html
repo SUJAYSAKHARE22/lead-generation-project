@@ -97,10 +97,12 @@
 
     <label>Select Industries</label>
     <select name="industry[]" multiple style="height:120px;">
-        {% for ind in suggested_industry %}
+{% if suggested_industry %}
+    {% for ind in suggested_industry %}
         <option value="{{ ind }}" selected>{{ ind }}</option>
-        {% endfor %}
-    </select>
+    {% endfor %}
+{% endif %}
+</select>
 
     <label>City</label>
     <input name="city" value="{{ city }}" required>
@@ -151,7 +153,10 @@ Open Project
 
 <!-- ========================= -->
 <!-- COMPANY LEADS SECTION -->
+<!-- Only show if a project is actively open (active_chat set) -->
 <!-- ========================= -->
+
+{% if active_chat %}
 
 <h2 style="margin-top:40px;margin-bottom:20px;">🏢 Company Leads</h2>
 
@@ -182,5 +187,7 @@ Open Project
     </div>
     {% endfor %}
 </div>
+
+{% endif %}
 
 {% endblock %}
