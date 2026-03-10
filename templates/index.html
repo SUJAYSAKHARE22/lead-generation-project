@@ -247,7 +247,9 @@ Hold CTRL to select multiple industries.
 {% endfor %}
 </table>
 
-<a href="/export_excel" class="export-btn">Export Excel</a>
+{% if active_chat %}
+<a href="/export_excel/{{ active_chat }}" class="export-btn">Export Excel</a>
+{% endif %}
 
 </div>
 </body>

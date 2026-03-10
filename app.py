@@ -31,7 +31,7 @@ app.secret_key = "tars_stable_system"
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
-SERP_API_KEY = "702c63ae7215840ef169436872c89fcfb19913954d04015f015bb025eeaf1bf9"
+SERP_API_KEY = ""
 
 @app.context_processor
 def inject_active_page():
@@ -116,7 +116,7 @@ def init_db():
     # Safely add new columns if not exist
     for col in [
         "description", "email", "ceo",
-        "company_linkedin", "leadership_linkedin", "status"
+        "company_linkedin", "leadership_linkedin", "status", "reason"
     ]:
         try:
             cur.execute(f"ALTER TABLE companies ADD COLUMN {col} TEXT")
@@ -1416,7 +1416,7 @@ def overview_project(chat_id):
     companies = conn.execute("""
     SELECT c.id, c.name, c.website, c.phone, c.address, c.rating,
            c.description, c.email, c.ceo,
-           c.company_linkedin, c.leadership_linkedin, c.status
+           c.company_linkedin, c.leadership_linkedin, c.status, c.reason
     FROM companies c
     JOIN chats ch ON c.chat_id = ch.id
     WHERE c.chat_id = ? AND ch.user = ?
@@ -1447,11 +1447,12 @@ def overview_project(chat_id):
 def update_status():
     company_id = request.form["company_id"]
     status = request.form["status"]
+    reason = request.form.get("reason", "")
 
     conn = get_db_connection()
     conn.execute(
-        "UPDATE companies SET status=? WHERE id=?",
-        (status, company_id)
+        "UPDATE companies SET status=?, reason=? WHERE id=?",
+        (status, reason, company_id)
     )
     conn.commit()
     conn.close()
