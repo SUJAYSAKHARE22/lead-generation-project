@@ -31,7 +31,7 @@ app.secret_key = "tars_stable_system"
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
-SERP_API_KEY = ""
+SERP_API_KEY = "702c63ae7215840ef169436872c89fcfb19913954d04015f015bb025eeaf1bf9"
 
 @app.context_processor
 def inject_active_page():
@@ -933,7 +933,9 @@ def signup():
         # auto login
         user_obj = User(user[0], user[1])
         login_user(user_obj)
-
+        session.pop("active_chat", None)
+        session.pop("suggested_industry", None)
+        session.pop("selected_city", None)
         return redirect("/dashboard")
 
     return render_template("signup.html")
@@ -1318,6 +1320,7 @@ def dashboard():
     conn.close()
 
     suggested = []
+    city = ""
     if chat_id:
         _, _, stored = get_product_info(chat_id)
         if stored:
@@ -1326,7 +1329,7 @@ def dashboard():
             except:
                 suggested = []
 
-    
+        
 
     city = session.get("selected_city", "")
 
@@ -1336,6 +1339,7 @@ def dashboard():
         suggested_industry=suggested,
         city=city,
         projects=projects,   # ⭐ NEW
+        active_chat=chat_id, 
         active_page="dashboard"
     )
 
@@ -1371,13 +1375,18 @@ def open_project(chat_id):
     return redirect("/dashboard")
 
 @app.route("/export_excel")
+@app.route("/export_excel/<int:chat_id>")
 @login_required
-def export_excel():
-   
-
-    chat_id = session.get("active_chat")
+def export_excel(chat_id=None):
     if not chat_id:
-        return redirect("/dashboard")
+        chat_id = session.get("active_chat")
+    if not chat_id:
+        return """
+            <script>
+                alert("No project selected. Please open a project first.");
+                window.history.back();
+            </script>
+        """
 
     companies = get_companies(chat_id)
 
@@ -1393,16 +1402,12 @@ def export_excel():
 
     title = row[0]
 
-    file_path = "company_leads.xlsx"
+    # Always create a fresh workbook — one file per project per download
+    wb = Workbook()
+    if "Sheet" in wb.sheetnames:
+        del wb["Sheet"]
 
-    if os.path.exists(file_path):
-        from openpyxl import load_workbook
-        wb = load_workbook(file_path)
-    else:
-        wb = Workbook()
-
-    # Create new sheet with project name
-    ws = wb.create_sheet(title=title[:30])  # Excel max 31 chars
+    ws = wb.create_sheet(title=title[:30])
 
     ws.append([
         "Company","Website","Phone","Address","Rating",
@@ -1412,11 +1417,12 @@ def export_excel():
     for c in companies:
         ws.append(list(c.values()))
 
+    file_path = f"leads_{chat_id}.xlsx"
     wb.save(file_path)
 
     return Response(open(file_path, "rb"),
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": "attachment;filename=company_leads.xlsx"})
+        headers={"Content-Disposition": f"attachment;filename={title}_leads.xlsx"})
 
 @app.route("/call_for_action")
 @login_required
@@ -1651,10 +1657,14 @@ def get_company_project_matches():
     conn.close()
 
     matches = find_matching_projects(
-        company_name,
-        company_description or "",
-        projects
-    )
+    company_name,
+    company_description or "",
+    projects
+)
+
+# Filter to only return project titles that exist in user's actual projects
+    valid_titles = [p[0] for p in projects]
+    matches = [m for m in matches if m in valid_titles]
 
     return jsonify(matches)
 
