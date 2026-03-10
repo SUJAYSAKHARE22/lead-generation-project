@@ -207,15 +207,16 @@ background:#4f46e5;
 <div class="card company-card"
      data-status="{{ c[11] if c[11] else 'explore' }}"
      onclick="openPopup(
-        '{{c[0]}}',
-        `{{c[1]|escape}}`,
-        `{{c[2]|escape}}`,
-        `{{c[3]|escape}}`,
-        `{{c[4]|escape}}`,
-        `{{c[5]|escape}}`,
-        `{{c[6]|escape}}`,
-        `{{c[7]|escape}}`
-     )">
+   '{{c[0]}}',
+   `{{c[1]|escape}}`,
+   `{{c[2]|escape}}`,
+   `{{c[3]|escape}}`,
+   `{{c[4]|escape}}`,
+   `{{c[5]|escape}}`,
+   `{{c[6]|escape}}`,
+   `{{c[7]|escape}}`,
+   `{{c[12]|escape if c[12] else ''}}`
+)">
 <h3>{{ c[1] }}</h3>
 <p>{{ c[6] }}</p>
 </div>
@@ -247,6 +248,9 @@ background:#4f46e5;
 <div class="confirm-modal-content">
     <h3>⚠️ Are you sure?</h3>
     <p>Do you really want to decline <strong id="confirmCompanyName"></strong>? This will mark them as not acceptable.</p>
+<textarea id="declineReason" placeholder="Write reason for declining (optional)..."
+    style="width:100%;padding:12px;border-radius:10px;border:none;background:rgba(255,255,255,0.07);
+    color:var(--text);font-size:13px;resize:none;height:80px;margin-bottom:16px;"></textarea>
     <div class="confirm-actions">
         <button class="confirm-yes" onclick="confirmDecline()">Yes, Decline</button>
         <button class="confirm-no" onclick="cancelDecline()">No, Go Back</button>
@@ -261,7 +265,7 @@ background:#4f46e5;
 let currentCompanyId = null;
 let currentCompanyName = "";
 
-function openPopup(id, name, website, phone, address, rating, desc, email){
+function openPopup(id, name, website, phone, address, rating, desc, email, reason){
     currentCompanyId = id;
     currentCompanyName = name;
     document.getElementById("modalName").innerText = name;
@@ -272,6 +276,7 @@ function openPopup(id, name, website, phone, address, rating, desc, email){
         <p><strong>Email:</strong> ${email || "-"}</p>
         <p><strong>Rating:</strong> ${rating || "-"}</p>
         ${website ? `<p><a href="${website}" target="_blank">Visit Website</a></p>` : ""}
+${reason ? `<p style="margin-top:10px;padding:10px;background:rgba(239,68,68,0.1);border-radius:8px;border-left:3px solid #ef4444;"><strong>Decline Reason:</strong> ${reason}</p>` : ""}
     `;
 
     fetch(`/get_company_project_matches?company_id=${id}`)
@@ -304,6 +309,8 @@ function setStatus(status){
 }
 
 function confirmDecline(){
+    const reason = document.getElementById("declineReason").value;
+    declineReason = reason;
     document.getElementById("confirmModal").style.display = "none";
     sendStatus('declined');
 }
@@ -319,7 +326,7 @@ function sendStatus(status){
         headers: {
             "Content-Type": "application/x-www-form-urlencoded"
         },
-        body: `company_id=${currentCompanyId}&status=${status}`
+        body: `company_id=${currentCompanyId}&status=${status}&reason=${encodeURIComponent(declineReason)}`
     }).then(()=>{
         if(status === 'cta'){
             showToast("✅ Successfully added to Call For Action!");
