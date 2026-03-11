@@ -31,7 +31,7 @@ app.secret_key = "tars_stable_system"
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
-SERP_API_KEY = "a1af308b83dfea02d95471c748653dd3e8c0e726e9888e7a810beea2dcc424c9"
+SERP_API_KEY = os.getenv("SERP_API_KEY")
 
 @app.context_processor
 def inject_active_page():
