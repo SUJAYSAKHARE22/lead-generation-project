@@ -391,6 +391,15 @@ body.light .topbar{
     transition:all 0.25s;
     box-shadow:0 6px 20px rgba(92,111,255,0.3);
     font-family:'Syne',sans-serif;
+/* CHAT */
+
+.messages{
+flex:1;
+overflow-y:auto;
+scroll-behavior:smooth;
+}
+.messages::-webkit-scrollbar{
+    width:6px;
 }
 
 .create-box button[type=submit]:hover{
@@ -887,6 +896,7 @@ document.addEventListener("keydown", function(e){
 window.addEventListener("DOMContentLoaded", function () {
     const savedTheme = localStorage.getItem("theme");
     const icon = document.getElementById("themeIcon");
+    const chatMessages = document.getElementById("chatMessages");
 
     document.querySelectorAll(".chat-item[data-chat-id]").forEach(function(item){
         const chatId = item.getAttribute("data-chat-id");
@@ -904,6 +914,24 @@ window.addEventListener("DOMContentLoaded", function () {
     if (savedTheme === "light") {
         document.body.classList.add("light");
         if (icon) { icon.classList.remove("fa-moon"); icon.classList.add("fa-sun"); }
+    }
+
+    if (chatMessages) {
+        requestAnimationFrame(function () {
+            const maxScrollTop = chatMessages.scrollHeight - chatMessages.clientHeight;
+
+            if (maxScrollTop <= 0) {
+                return;
+            }
+
+            requestAnimationFrame(function () {
+                chatMessages.scrollTop = 0;
+                chatMessages.scrollTo({
+                    top: maxScrollTop,
+                    behavior: "smooth"
+                });
+            });
+        });
     }
 });
 
