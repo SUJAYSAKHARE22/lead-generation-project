@@ -185,7 +185,7 @@ body.light .main-sidebar{
     backdrop-filter:blur(20px);
     -webkit-backdrop-filter:blur(20px);
     border-right:1px solid var(--glass-border);
-    padding:24px 16px;
+    padding:64px 16px 24px;
     overflow-y:auto;
     z-index:99;
     display:flex;
@@ -289,6 +289,119 @@ body.light .projects-sidebar{
     background:var(--bg);
     position:relative;
     z-index:1;
+    transition:margin-left 0.3s ease;
+}
+
+/* ─── SIDEBAR TOGGLE BUTTON ─── */
+.sidebar-toggle{
+    position:fixed;
+    top:14px;
+    left:272px;
+    z-index:9999;
+    width:34px;
+    height:34px;
+    border-radius:10px;
+    border:1px solid var(--glass-border);
+    background:rgba(10,22,40,0.9);
+    backdrop-filter:blur(12px);
+    color:var(--text2);
+    font-size:13px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:all 0.25s;
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);
+}
+
+body.light .sidebar-toggle{
+    background:rgba(238,242,255,0.95);
+}
+
+.sidebar-toggle:hover{
+    background:rgba(92,111,255,0.2);
+    border-color:rgba(92,111,255,0.4);
+    color:#a5b4fc;
+}
+
+body.sidebar-collapsed .sidebar-toggle{
+    left:82px;
+}
+
+/* ─── COLLAPSED: main sidebar shrinks ─── */
+body.sidebar-collapsed .main-sidebar{
+    width:70px;
+    min-width:70px;
+    padding:28px 8px;
+    overflow:hidden;
+}
+
+body.sidebar-collapsed .main-sidebar .sidebar-brand h2,
+body.sidebar-collapsed .main-sidebar .sidebar-section,
+body.sidebar-collapsed .main-sidebar a span,
+body.sidebar-collapsed .main-sidebar [style*="border-top"]{
+    display:none;
+}
+
+body.sidebar-collapsed .main-sidebar .sidebar-brand{
+    justify-content:center;
+    padding:0;
+}
+
+body.sidebar-collapsed .main-sidebar a{
+    justify-content:center;
+    padding:11px;
+}
+
+body.sidebar-collapsed .main-sidebar a.active::before{
+    display:none;
+}
+
+/* ─── COLLAPSED: projects sidebar shrinks ─── */
+body.sidebar-collapsed .projects-sidebar{
+    width:90px;
+    min-width:90px;
+    left:70px;
+    padding:64px 8px 24px;
+    align-items:center;
+}
+
+body.sidebar-collapsed .projects-sidebar h2{
+    font-size:10px;
+    text-align:center;
+    margin-bottom:10px;
+}
+
+body.sidebar-collapsed .new-project-btn{
+    width:44px;
+    height:44px;
+    padding:0;
+    justify-content:center;
+    font-size:0;
+    border-radius:12px;
+}
+
+body.sidebar-collapsed .new-project-btn i{
+    font-size:16px;
+    margin:0;
+}
+
+body.sidebar-collapsed .chat-item{
+    width:44px;
+    height:44px;
+    padding:0;
+    justify-content:center;
+}
+
+body.sidebar-collapsed .chat-item span{ display:none; }
+
+body.sidebar-collapsed .chat-logo{
+    width:28px;
+    height:28px;
+}
+
+body.sidebar-collapsed .main{
+    margin-left:160px;
 }
 
 /* Topbar */
@@ -643,44 +756,49 @@ body.light .input-wrapper{
 </head>
 <body>
 
+<!-- Hamburger toggle -->
+<button class="sidebar-toggle" onclick="toggleSidebar()">
+    <i class="fas fa-bars"></i>
+</button>
+
 <!-- Main nav sidebar -->
 <div class="sidebar main-sidebar">
     <div class="sidebar-brand">
         <div class="sidebar-brand-icon">🚀</div>
-        <h2>LeadPilot<span style="color:#7c8fff">Gen6</span></h2>
+        <h2>Gen6<span style="color:#7c8fff">Gen6</span></h2>
     </div>
 
     <div class="sidebar-section">Main</div>
     <a href="/dashboard" class="{% if active_page == 'dashboard' %}active{% endif %}">
-        <i class="fas fa-chart-line"></i> Dashboard
+        <i class="fas fa-chart-line"></i><span> Dashboard</span>
     </a>
     <a href="/savedprojects" class="{% if active_page == 'product' %}active{% endif %}">
-        <i class="fas fa-folder-open"></i> Projects
+        <i class="fas fa-folder-open"></i><span> Projects</span>
     </a>
     <a href="/chat" class="{% if active_page == 'chat' %}active{% endif %}">
-        <i class="fas fa-robot"></i> AI Chat
+        <i class="fas fa-robot"></i><span> AI Chat</span>
     </a>
 
     <div class="sidebar-section">Intelligence</div>
     <a href="/overview" class="{% if active_page == 'overview' %}active{% endif %}">
-        <i class="fas fa-brain"></i> Overview
+        <i class="fas fa-brain"></i><span> Overview</span>
     </a>
     <a href="/call_for_action" class="{% if active_page == 'cta' %}active{% endif %}">
-        <i class="fas fa-bullhorn"></i> Call For Action
+        <i class="fas fa-bullhorn"></i><span> Call For Action</span>
     </a>
     <a href="/industry_viewed" class="{% if active_page == 'industry' %}active{% endif %}">
-        <i class="fas fa-industry"></i> Industry Viewed
+        <i class="fas fa-industry"></i><span> Industry Viewed</span>
     </a>
 
     <div class="sidebar-section">Export</div>
     <a href="/export_excel" class="{% if active_page == 'export' %}active{% endif %}">
-        <i class="fas fa-file-excel"></i> Export Leads
+        <i class="fas fa-file-excel"></i><span> Export Leads</span>
     </a>
 
     <div style="margin-top:auto;padding-top:20px;border-top:1px solid rgba(255,255,255,0.08);">
         <a href="#" onclick="document.getElementById('logoutModal').style.display='flex'; return false;"
            style="color:#ff5c7c!important;">
-            <i class="fas fa-sign-out-alt" style="color:#ff5c7c!important;"></i> Logout
+            <i class="fas fa-sign-out-alt" style="color:#ff5c7c!important;"></i><span> Logout</span>
         </a>
     </div>
 </div>
@@ -754,7 +872,7 @@ body.light .input-wrapper{
 
     {% else %}
 
-    <div class="messages">
+    <div class="messages" id="chatMessages">
         {% if messages %}
             {% for role, content, timestamp in messages %}
             <div class="msg {{role}}">
@@ -887,6 +1005,7 @@ document.addEventListener("keydown", function(e){
 window.addEventListener("DOMContentLoaded", function () {
     const savedTheme = localStorage.getItem("theme");
     const icon = document.getElementById("themeIcon");
+    const chatMessages = document.getElementById("chatMessages");
 
     document.querySelectorAll(".chat-item[data-chat-id]").forEach(function(item){
         const chatId = item.getAttribute("data-chat-id");
@@ -904,6 +1023,17 @@ window.addEventListener("DOMContentLoaded", function () {
     if (savedTheme === "light") {
         document.body.classList.add("light");
         if (icon) { icon.classList.remove("fa-moon"); icon.classList.add("fa-sun"); }
+    }
+
+    if (chatMessages) {
+        requestAnimationFrame(function () {
+            const maxScrollTop = chatMessages.scrollHeight - chatMessages.clientHeight;
+            if (maxScrollTop <= 0) { return; }
+            requestAnimationFrame(function () {
+                chatMessages.scrollTop = 0;
+                chatMessages.scrollTo({ top: maxScrollTop, behavior: "smooth" });
+            });
+        });
     }
 });
 
