@@ -4,104 +4,113 @@
 
 {% block extra_css %}
 <style>
+.page-title{
+    font-family:'Syne',sans-serif;
+    font-size:24px;
+    font-weight:700;
+    margin-bottom:32px;
+}
+
 .grid{
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-    gap:25px;
+    grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+    gap:22px;
 }
 
 .card{
     background:var(--card);
-    padding:20px;
-    border-radius:16px;
-    transition:0.3s;
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border:1px solid var(--glass-border);
+    padding:24px;
+    border-radius:20px;
+    transition:all 0.25s;
     display:flex;
     flex-direction:column;
-    gap:15px;
-}
-
-/* DARK shadow */
-body:not(.light) .card{
-    box-shadow:0 15px 40px rgba(0,0,0,0.4);
-}
-
-/* LIGHT shadow */
-body.light .card{
-    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+    gap:16px;
+    box-shadow:var(--shadow);
 }
 
 .card:hover{
     transform:translateY(-5px);
+    border-color:rgba(92,111,255,0.3);
+    box-shadow:0 24px 50px rgba(0,0,0,0.4),0 0 0 1px rgba(92,111,255,0.15);
 }
 
 .project-header{
     display:flex;
     align-items:center;
-    gap:15px;
+    gap:16px;
 }
 
 .project-logo{
-    width:50px;
-    height:50px;
-    border-radius:12px;
+    width:52px;
+    height:52px;
+    border-radius:14px;
     object-fit:cover;
+    border:1px solid var(--glass-border);
+    background:var(--card-solid);
+    flex-shrink:0;
 }
 
 .project-info h3{
+    font-family:'Syne',sans-serif;
+    font-size:17px;
+    font-weight:700;
+    color:var(--text);
     margin:0;
-    font-size:18px;
 }
 
 .project-info p{
     margin:4px 0 0;
-    color:var(--soft);
-    font-size:14px;
+    color:var(--text2);
+    font-size:13px;
 }
 
-button{
+.open-btn{
     margin-top:auto;
-    padding:10px 16px;
-    border:none;
-    border-radius:10px;
-    background:var(--accent);
-    color:white;
+    padding:11px 16px;
+    border:1px solid rgba(92,111,255,0.25);
+    border-radius:12px;
+    background:rgba(92,111,255,0.1);
+    color:#a5b4fc;
     cursor:pointer;
-    transition:0.3s;
+    font-weight:600;
+    font-size:13px;
+    transition:all 0.2s;
+    font-family:'DM Sans',sans-serif;
+    text-align:center;
 }
 
-button:hover{
-    filter:brightness(1.1);
+.open-btn:hover{
+    background:linear-gradient(135deg,#5c6fff,#7c8fff);
+    color:white;
+    border-color:transparent;
+    box-shadow:0 6px 18px rgba(92,111,255,0.35);
+    transform:translateY(-1px);
 }
-
 </style>
 {% endblock %}
 
 {% block content %}
-<h2 style="margin-bottom:24px;">📊 Project Overview</h2>
+<div class="page-title">📊 Project Overview</div>
 
 <div class="grid">
 {% for p in projects %}
 <div class="card">
-
-<div class="project-header">
-
-{% set logo_path = 'project_logos/' ~ p[0] ~ '.png' %}
-
-<img src="{{ url_for('static', filename=logo_path) }}"
-     onerror="this.src='{{ url_for('static', filename='project_logos/default.png') }}'"
-     class="project-logo">
-
-<div class="project-info">
-<h3>{{ p[1] }}</h3>
-<p>{{ p[2] }}</p>
-</div>
-
-</div>
-
-<button onclick="location.href='/overview_project/{{p[0]}}'">
-Open →
-</button>
-
+    <div class="project-header">
+        {% set logo_path = 'project_logos/' ~ p[0] ~ '.png' %}
+        <img src="{{ url_for('static', filename=logo_path) }}"
+             onerror="this.src='{{ url_for('static', filename='project_logos/default.png') }}'"
+             class="project-logo">
+        <div class="project-info">
+            <h3>{{ p[1] }}</h3>
+            <p>{{ p[2] }}</p>
+        </div>
+    </div>
+    <button class="open-btn" onclick="location.href='/overview_project/{{p[0]}}'">
+        Open Project →
+    </button>
 </div>
 {% endfor %}
 </div>

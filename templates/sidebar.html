@@ -1,59 +1,83 @@
 <div class="sidebar">
 <h2>🚀Gen6</h2>
 
-<a href="/dashboard" class="{% if active_page == 'dashboard' %}active{% endif %}">
-    <i class="fas fa-chart-line"></i> Dashboard
-</a>
+    <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🚀</div>
+        <h2>LeadPilot<span style="color:var(--accent)">Gen6</span></h2>
+    </div>
 
-<a href="/savedprojects" class="{% if active_page == 'product' %}active{% endif %}">
-    <i class="fas fa-folder"></i> Product
-</a>
+    <div class="sidebar-section">Main</div>
 
-<a href="/chat" class="{% if active_page == 'chat' %}active{% endif %}">
-    <i class="fas fa-robot"></i> AI Chat
-</a>
+    <a href="/dashboard" class="{% if active_page == 'dashboard' %}active{% endif %}">
+        <i class="fas fa-chart-line"></i> Dashboard
+    </a>
 
-<a href="/overview" class="{% if active_page == 'overview' %}active{% endif %}">
-    <i class="fas fa-brain"></i> Overview
-</a>
+    <a href="/savedprojects" class="{% if active_page == 'product' %}active{% endif %}">
+        <i class="fas fa-folder-open"></i> Projects
+    </a>
 
-<a href="/call_for_action" class="{% if active_page == 'cta' %}active{% endif %}">
-    <i class="fas fa-bullhorn"></i> Call For Action
-</a>
+    <a href="/chat" class="{% if active_page == 'chat' %}active{% endif %}">
+        <i class="fas fa-robot"></i> AI Chat
+    </a>
 
-<a href="/industry_viewed" class="{% if active_page == 'industry' %}active{% endif %}">
-    <i class="fas fa-brain"></i> Industry Viewed
-</a>
+    <div class="sidebar-section">Intelligence</div>
 
-<a href="/export_excel" class="{% if active_page == 'export' %}active{% endif %}">
-    <i class="fas fa-file-excel"></i> Export Leads
-</a>
+    <a href="/overview" class="{% if active_page == 'overview' %}active{% endif %}">
+        <i class="fas fa-brain"></i> Overview
+    </a>
 
-<a href="#" onclick="document.getElementById('logoutModal').style.display='flex'; return false;">
-    <i class="fas fa-sign-out-alt"></i> Logout
-</a>
+    <a href="/call_for_action" class="{% if active_page == 'cta' %}active{% endif %}">
+        <i class="fas fa-bullhorn"></i> Call For Action
+    </a>
 
+    <a href="/industry_viewed" class="{% if active_page == 'industry' %}active{% endif %}">
+        <i class="fas fa-industry"></i> Industry Viewed
+    </a>
+
+    <div class="sidebar-section">Export</div>
+
+    <a href="/export_excel" class="{% if active_page == 'export' %}active{% endif %}">
+        <i class="fas fa-file-excel"></i> Export Leads
+    </a>
+
+    <div style="margin-top:auto; padding-top:20px; border-top:1px solid var(--glass-border); margin-top:24px;">
+        <a href="#" onclick="document.getElementById('logoutModal').style.display='flex'; return false;"
+           style="color:var(--red)!important;">
+            <i class="fas fa-sign-out-alt" style="color:var(--red)!important;"></i> Logout
+        </a>
+    </div>
 </div>
+
 <!-- Logout Confirmation Modal -->
 <div id="logoutModal" style="
-  position:fixed; inset:0; background:rgba(0,0,0,0.6);
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  backdrop-filter:blur(8px);
   display:none; justify-content:center; align-items:center; z-index:9999;">
   <div style="
-    background:#1e293b; padding:25px; border-radius:14px;
-    width:320px; text-align:center; color:white;
-    box-shadow:0 20px 40px rgba(0,0,0,0.5);">
-    <h3 style="margin-bottom:10px;">Log Out</h3>
-    <p style="color:#94a3b8; margin-bottom:20px;">Are you sure you want to log out?</p>
+    background:var(--card-solid);
+    backdrop-filter:blur(24px);
+    border:1px solid var(--glass-border);
+    padding:32px 28px; border-radius:20px;
+    width:340px; text-align:center; color:var(--text);
+    box-shadow:0 30px 60px rgba(0,0,0,0.5);">
+    <div style="width:52px;height:52px;background:rgba(255,92,124,0.15);border-radius:50%;
+        display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:22px;">
+        👋
+    </div>
+    <h3 style="font-family:'Syne',sans-serif;margin-bottom:8px;font-size:18px;">Log Out</h3>
+    <p style="color:var(--text2); margin-bottom:24px;font-size:14px;">Are you sure you want to end your session?</p>
     <div style="display:flex; gap:10px; justify-content:center;">
       <a href="/logout" style="
-        background:#ef4444; padding:10px 18px;
-        border-radius:8px; color:white; cursor:pointer; text-decoration:none;">
+        background:var(--red); padding:11px 22px;
+        border-radius:12px; color:white; cursor:pointer; text-decoration:none;
+        font-size:14px; font-weight:600;">
         Yes, Logout
       </a>
       <button onclick="document.getElementById('logoutModal').style.display='none'" style="
-        background:#475569; border:none; padding:10px 18px;
-        border-radius:8px; color:white; cursor:pointer;">
-        No, Stay
+        background:var(--glass); border:1px solid var(--glass-border);
+        padding:11px 22px; border-radius:12px; color:var(--text);
+        cursor:pointer; font-size:14px; font-weight:600;">
+        Stay
       </button>
     </div>
   </div>
