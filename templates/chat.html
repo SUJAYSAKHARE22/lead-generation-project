@@ -241,6 +241,7 @@ cursor:pointer;
 .messages{
 flex:1;
 overflow-y:auto;
+scroll-behavior:smooth;
 }
 .messages::-webkit-scrollbar{
     width:6px;
@@ -636,7 +637,7 @@ body.sidebar-collapsed .projects-sidebar{
 
 {% else %}
 
-<div class="messages">
+<div class="messages" id="chatMessages">
 
 {% if messages %}
 {% for role, content, timestamp in messages %}
@@ -818,6 +819,7 @@ document.addEventListener("keydown", function(e){
 window.addEventListener("DOMContentLoaded", function () {
     const savedTheme = localStorage.getItem("theme");
     const icon = document.getElementById("themeIcon");
+    const chatMessages = document.getElementById("chatMessages");
 
   document.querySelectorAll(".chat-item[data-chat-id]").forEach(function(item){
     const chatId = item.getAttribute("data-chat-id");
@@ -846,6 +848,24 @@ window.addEventListener("DOMContentLoaded", function () {
             icon.classList.remove("fa-moon");
             icon.classList.add("fa-sun");
         }
+    }
+
+    if (chatMessages) {
+        requestAnimationFrame(function () {
+            const maxScrollTop = chatMessages.scrollHeight - chatMessages.clientHeight;
+
+            if (maxScrollTop <= 0) {
+                return;
+            }
+
+            requestAnimationFrame(function () {
+                chatMessages.scrollTop = 0;
+                chatMessages.scrollTo({
+                    top: maxScrollTop,
+                    behavior: "smooth"
+                });
+            });
+        });
     }
 });
 

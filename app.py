@@ -1,6 +1,3 @@
-
- 
-
 import sqlite3
 import requests
 import re
@@ -31,7 +28,7 @@ app.secret_key = "tars_stable_system"
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
-SERP_API_KEY = "a1af308b83dfea02d95471c748653dd3e8c0e726e9888e7a810beea2dcc424c9"
+SERP_API_KEY = "b6eee82776bb954560718c2bce860251638c2cc5dce73e44a2bc4868a5494f"
 
 @app.context_processor
 def inject_active_page():
@@ -116,7 +113,7 @@ def init_db():
     # Safely add new columns if not exist
     for col in [
         "description", "email", "ceo",
-        "company_linkedin", "leadership_linkedin", "status", "reason"
+        "company_linkedin", "leadership_linkedin", "status"
     ]:
         try:
             cur.execute(f"ALTER TABLE companies ADD COLUMN {col} TEXT")
@@ -927,9 +924,7 @@ def signup():
         # auto login
         user_obj = User(user[0], user[1])
         login_user(user_obj)
-        session.pop("active_chat", None)
-        session.pop("suggested_industry", None)
-        session.pop("selected_city", None)
+
         return redirect("/dashboard")
 
     return render_template("signup.html")
@@ -1233,7 +1228,6 @@ def dashboard():
     conn.close()
 
     suggested = []
-    city = ""
     if chat_id:
         _, _, stored = get_product_info(chat_id)
         if stored:
@@ -1242,7 +1236,7 @@ def dashboard():
             except:
                 suggested = []
 
-        
+    
 
     city = session.get("selected_city", "")
 
@@ -1252,7 +1246,6 @@ def dashboard():
         suggested_industry=suggested,
         city=city,
         projects=projects,   # ⭐ NEW
-        active_chat=chat_id, 
         active_page="dashboard"
     )
 
@@ -1288,18 +1281,13 @@ def open_project(chat_id):
     return redirect("/dashboard")
 
 @app.route("/export_excel")
-@app.route("/export_excel/<int:chat_id>")
 @login_required
-def export_excel(chat_id=None):
+def export_excel():
+   
+
+    chat_id = session.get("active_chat")
     if not chat_id:
-        chat_id = session.get("active_chat")
-    if not chat_id:
-        return """
-            <script>
-                alert("No project selected. Please open a project first.");
-                window.history.back();
-            </script>
-        """
+        return redirect("/dashboard")
 
     companies = get_companies(chat_id)
 
@@ -1315,12 +1303,16 @@ def export_excel(chat_id=None):
 
     title = row[0]
 
-    # Always create a fresh workbook — one file per project per download
-    wb = Workbook()
-    if "Sheet" in wb.sheetnames:
-        del wb["Sheet"]
+    file_path = "company_leads.xlsx"
 
-    ws = wb.create_sheet(title=title[:30])
+    if os.path.exists(file_path):
+        from openpyxl import load_workbook
+        wb = load_workbook(file_path)
+    else:
+        wb = Workbook()
+
+    # Create new sheet with project name
+    ws = wb.create_sheet(title=title[:30])  # Excel max 31 chars
 
     ws.append([
         "Company","Website","Phone","Address","Rating",
@@ -1330,12 +1322,11 @@ def export_excel(chat_id=None):
     for c in companies:
         ws.append(list(c.values()))
 
-    file_path = f"leads_{chat_id}.xlsx"
     wb.save(file_path)
 
     return Response(open(file_path, "rb"),
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f"attachment;filename={title}_leads.xlsx"})
+        headers={"Content-Disposition": "attachment;filename=company_leads.xlsx"})
 
 @app.route("/call_for_action")
 @login_required
@@ -1416,7 +1407,7 @@ def overview_project(chat_id):
     companies = conn.execute("""
     SELECT c.id, c.name, c.website, c.phone, c.address, c.rating,
            c.description, c.email, c.ceo,
-           c.company_linkedin, c.leadership_linkedin, c.status, c.reason
+           c.company_linkedin, c.leadership_linkedin, c.status
     FROM companies c
     JOIN chats ch ON c.chat_id = ch.id
     WHERE c.chat_id = ? AND ch.user = ?
@@ -1447,12 +1438,11 @@ def overview_project(chat_id):
 def update_status():
     company_id = request.form["company_id"]
     status = request.form["status"]
-    reason = request.form.get("reason", "")
 
     conn = get_db_connection()
     conn.execute(
-        "UPDATE companies SET status=?, reason=? WHERE id=?",
-        (status, reason, company_id)
+        "UPDATE companies SET status=? WHERE id=?",
+        (status, company_id)
     )
     conn.commit()
     conn.close()
@@ -1571,14 +1561,10 @@ def get_company_project_matches():
     conn.close()
 
     matches = find_matching_projects(
-    company_name,
-    company_description or "",
-    projects
-)
-
-# Filter to only return project titles that exist in user's actual projects
-    valid_titles = [p[0] for p in projects]
-    matches = [m for m in matches if m in valid_titles]
+        company_name,
+        company_description or "",
+        projects
+    )
 
     return jsonify(matches)
 
