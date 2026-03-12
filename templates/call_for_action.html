@@ -1,134 +1,198 @@
 {% extends "base.html" %}
-
 {% block title %}Call For Action | LeadPilotGen6{% endblock %}
 
 {% block extra_css %}
 <style>
+.page-title{
+    font-family:'Syne',sans-serif;
+    font-size:24px;
+    font-weight:700;
+    margin-bottom:28px;
+}
+
 .project-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+    grid-template-columns:repeat(auto-fill,minmax(360px,1fr));
     gap:24px;
 }
 
 .project-card{
-    border-radius:16px;
-    padding:20px;
+    background:var(--card);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border:1px solid var(--glass-border);
+    border-radius:20px;
+    padding:22px;
+    box-shadow:var(--shadow);
 }
 
-/* DARK (default) */
-body:not(.light) .project-card{
-    background:#1e293b;
-    color:white;
+.project-card h3{
+    font-family:'Syne',sans-serif;
+    font-size:17px;
+    font-weight:700;
+    margin-bottom:6px;
+    color:var(--text);
 }
-
-/* LIGHT */
-body.light .project-card{
-    background:#ffffff;
-    color:#0f172a;
-}
-
-.project-card h3{ margin-bottom:8px; }
 
 .project-desc{
-    color:var(--soft);
-    font-size:14px;
-    margin-bottom:14px;
+    color:var(--text2);
+    font-size:13px;
+    margin-bottom:18px;
+    line-height:1.5;
 }
 
-.company-list{ display:grid; gap:12px; }
+.company-list{ display:grid; gap:14px; }
 
- 
 .company-card{
-    border-radius:12px;
-    padding:14px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--glass-border);
+    border-radius:14px;
+    padding:16px;
+    transition:all 0.2s;
 }
 
-/* DARK (default) */
-body:not(.light) .company-card{
-    background:#111827;
-    color:white;
+.company-card:hover{
+    border-color:rgba(92,111,255,0.25);
+    background:rgba(92,111,255,0.04);
 }
 
-/* LIGHT */
-body.light .company-card{
-    background:#ffffff;
-    color:#0f172a;
+.company-card h4{
+    font-family:'Syne',sans-serif;
+    font-size:15px;
+    font-weight:700;
+    margin-bottom:8px;
+    color:var(--text);
 }
-.company-card h4{ margin-bottom:6px; font-size:16px; }
 
 .muted{
-    color:var(--soft);
+    color:var(--text2);
     font-size:13px;
-    margin-bottom:4px;
+    margin-bottom:5px;
+    display:flex;
+    align-items:center;
+    gap:6px;
 }
 
 .company-card a{
-    color:#60a5fa;
+    color:#7c8fff;
     text-decoration:none;
-}
-
- .generate-btn{
-    margin-top:10px;
-    border:none;
-    padding:8px 12px;
-    border-radius:8px;
-    color:white;
-    cursor:pointer;
     font-size:13px;
 }
 
-/* DARK */
-body:not(.light) .generate-btn{
-    background:#2563eb;
-}
+.company-card a:hover{ color:#a5b4fc; }
 
-/* LIGHT */
-body.light .generate-btn{
-    background:#4f46e5;
+.generate-btn{
+    margin-top:12px;
+    border:1px solid rgba(92,111,255,0.25);
+    padding:9px 16px;
+    border-radius:10px;
+    color:#a5b4fc;
+    background:rgba(92,111,255,0.1);
+    cursor:pointer;
+    font-size:13px;
+    font-weight:600;
+    transition:all 0.2s;
+    font-family:'DM Sans',sans-serif;
+    width:100%;
 }
 
 .generate-btn:hover{
-    filter:brightness(1.1);
+    background:linear-gradient(135deg,#5c6fff,#7c8fff);
+    color:white;
+    border-color:transparent;
+    box-shadow:0 6px 18px rgba(92,111,255,0.35);
+    transform:translateY(-1px);
 }
 
+/* Modal */
 #emailModal{
     display:none;
     position:fixed;
     inset:0;
-    background:rgba(0,0,0,0.7);
+    background:rgba(0,0,0,0.72);
+    backdrop-filter:blur(12px);
     justify-content:center;
     align-items:center;
     z-index:1000;
 }
 
- .modal-content{
-    padding:22px;
-    border-radius:14px;
-    width:650px;
-    max-height:85vh;
+.modal-content{
+    background:var(--card-solid);
+    border:1px solid var(--glass-border);
+    padding:28px;
+    border-radius:22px;
+    width:660px;
+    max-width:94vw;
+    max-height:90vh;
     overflow:auto;
+    box-shadow:0 30px 60px rgba(0,0,0,0.5);
+    animation:modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
 }
 
-/* DARK */
-body:not(.light) .modal-content{
-    background:#1f2937;
-    color:white;
+@keyframes modalIn{
+    from{ opacity:0; transform:scale(0.92) translateY(20px); }
+    to{ opacity:1; transform:scale(1) translateY(0); }
 }
 
-/* LIGHT */
-body.light .modal-content{
-    background:#ffffff;
-    color:#0f172a;
+.modal-content h3{
+    font-family:'Syne',sans-serif;
+    font-size:20px;
+    font-weight:700;
+    margin-bottom:20px;
+    color:var(--text);
+}
+
+.modal-label{
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:1.2px;
+    text-transform:uppercase;
+    color:var(--text2);
+    margin-bottom:6px;
+    display:block;
 }
 
 .modal-content input,
 .modal-content textarea{
     width:100%;
-    padding:10px;
-    border-radius:8px;
-    border:none;
-    margin-bottom:14px;
+    padding:12px 16px;
+    border-radius:12px;
+    border:1px solid var(--glass-border);
+    background:rgba(255,255,255,0.04);
+    color:var(--text);
+    margin-bottom:16px;
     font-size:14px;
+    outline:none;
+    transition:all 0.2s;
+    font-family:'DM Sans',sans-serif;
+}
+
+.modal-content input:focus,
+.modal-content textarea:focus{
+    border-color:rgba(92,111,255,0.4);
+    background:rgba(92,111,255,0.06);
+    box-shadow:0 0 0 3px rgba(92,111,255,0.12);
+}
+
+.recipient-badge{
+    display:none;
+    margin-bottom:16px;
+    padding:14px 16px;
+    background:rgba(34,211,165,0.08);
+    border:1px solid rgba(34,211,165,0.2);
+    border-radius:12px;
+}
+
+.recipient-badge .recipient-name{
+    font-weight:700;
+    color:#22d3a5;
+    font-size:15px;
+}
+
+.recipient-badge .recipient-email{
+    font-size:13px;
+    color:var(--text2);
+    margin-top:3px;
 }
 
 .modal-actions{
@@ -136,67 +200,87 @@ body.light .modal-content{
     justify-content:space-between;
     align-items:center;
     gap:10px;
-}
-
-.btn-close{
-    background:#ef4444;
-    border:none;
-    padding:8px 12px;
-    border-radius:8px;
-    color:white;
-    cursor:pointer;
+    margin-top:4px;
 }
 
 .btn-send{
-    background:#2563eb;
+    background:linear-gradient(135deg,#5c6fff,#7c8fff);
     border:none;
-    padding:8px 16px;
-    border-radius:8px;
+    padding:11px 20px;
+    border-radius:12px;
     color:white;
     cursor:pointer;
+    font-weight:700;
+    font-size:13px;
+    transition:all 0.25s;
+    box-shadow:0 6px 18px rgba(92,111,255,0.3);
+    font-family:'Syne',sans-serif;
 }
 
-.btn-send:hover:not(:disabled){
-    background:#1d4ed8;
-}
+.btn-send:hover:not(:disabled){ transform:translateY(-1px); box-shadow:0 10px 24px rgba(92,111,255,0.4); }
 
 .btn-send:disabled{
-    background:#94a3b8;
+    background:rgba(92,111,255,0.3);
     cursor:not-allowed;
     opacity:0.6;
 }
 
 .btn-copy{
-    background:#10b981;
-    border:none;
-    padding:8px 12px;
-    border-radius:8px;
-    color:white;
+    background:rgba(34,211,165,0.15);
+    border:1px solid rgba(34,211,165,0.25);
+    padding:11px 16px;
+    border-radius:12px;
+    color:#22d3a5;
     cursor:pointer;
+    font-weight:600;
+    font-size:13px;
+    transition:all 0.2s;
+    font-family:'DM Sans',sans-serif;
 }
 
-.loading{
+.btn-copy:hover{ background:rgba(34,211,165,0.25); }
+
+.btn-close{
+    background:rgba(255,92,124,0.1);
+    border:1px solid rgba(255,92,124,0.25);
+    padding:11px 16px;
+    border-radius:12px;
+    color:#ff5c7c;
+    cursor:pointer;
+    font-weight:600;
     font-size:13px;
-    color:#60a5fa;
-    margin-bottom:8px;
+    transition:all 0.2s;
+    font-family:'DM Sans',sans-serif;
 }
-/* LIGHT PAGE BACKGROUND */
-body.light{
-    background:#f1f5f9;
-    color:#0f172a;
+
+.btn-close:hover{ background:rgba(255,92,124,0.2); }
+
+.loading-txt{
+    font-size:13px;
+    color:#7c8fff;
+    margin-bottom:12px;
+    display:none;
+    padding:10px;
+    background:rgba(92,111,255,0.08);
+    border-radius:10px;
+    text-align:center;
 }
-body.light .company-card a{
-    color:#2563eb;
+
+#sendStatus{
+    display:none;
+    margin-top:12px;
+    padding:11px 14px;
+    border-radius:12px;
+    font-size:13px;
+    font-weight:600;
 }
-body.light .sidebar{
-    background:#ffffff;
-}
-.empty{ color:var(--soft); }
+
+.empty{ color:var(--text2); font-size:15px; }
 </style>
 {% endblock %}
 
 {% block content %}
-<h2 style="margin-bottom:24px;">📞 Call For Action</h2>
+<div class="page-title">📞 Call For Action</div>
 
 {% if projects %}
 <div class="project-grid">
@@ -209,14 +293,12 @@ body.light .sidebar{
     {% for c in p.companies %}
     <div class="company-card">
         <h4>{{ c.name }}</h4>
-
-        {% if c.description %}<p class="muted">{{ c.description }}</p>{% endif %}
-        {% if c.rating %}<p class="muted">⭐ {{ c.rating }}</p>{% endif %}
-        {% if c.email %}<p class="muted">📧 {{ c.email }}</p>{% endif %}
-        {% if c.phone %}<p class="muted">📞 {{ c.phone }}</p>{% endif %}
-        {% if c.address %}<p class="muted">📍 {{ c.address }}</p>{% endif %}
-        {% if c.website %}<p><a href="{{ c.website }}" target="_blank">Visit Website</a></p>{% endif %}
-
+        {% if c.description %}<div class="muted">📝 {{ c.description }}</div>{% endif %}
+        {% if c.rating %}<div class="muted">⭐ {{ c.rating }}</div>{% endif %}
+        {% if c.email %}<div class="muted">📧 {{ c.email }}</div>{% endif %}
+        {% if c.phone %}<div class="muted">📞 {{ c.phone }}</div>{% endif %}
+        {% if c.address %}<div class="muted">📍 {{ c.address }}</div>{% endif %}
+        {% if c.website %}<div class="muted"><a href="{{ c.website }}" target="_blank">🌐 Visit Website →</a></div>{% endif %}
         <button class="generate-btn"
             onclick="generateEmail(
                 `{{ p.title|escape }}`,
@@ -237,38 +319,33 @@ body.light .sidebar{
 <p class="empty">No companies marked as CTA yet.</p>
 {% endif %}
 
+<!-- Email Modal -->
 <div id="emailModal">
     <div class="modal-content">
-        <h3>AI Generated Newsletter</h3>
+        <h3>✉ AI Generated Newsletter</h3>
 
-        <div id="loadingText" class="loading" style="display:none;">
-            Generating email...
+        <div id="loadingText" class="loading-txt">⏳ Generating email with AI...</div>
+
+        <div id="recipientInfo" class="recipient-badge">
+            <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:8px;">📧 Sending To</div>
+            <div class="recipient-name" id="recipientName"></div>
+            <div class="recipient-email" id="recipientEmail"></div>
         </div>
 
-        <div id="recipientInfo" style="display:none; margin-bottom:14px; padding:12px; background:rgba(34,197,94,0.1); border-radius:8px; border:1px solid rgba(34,197,94,0.3);">
-            <strong>📧 Sending To:</strong>
-            <div style="margin-top:8px;">
-                <div id="recipientName" style="font-weight:600; color:#22c55e; font-size:15px;"></div>
-                <div id="recipientEmail" style="font-size:13px; color:#94a3b8; margin-top:4px;"></div>
-            </div>
-        </div>
-
-        <label><strong>Subject:</strong></label>
+        <label class="modal-label">Subject</label>
         <input id="emailSubject" placeholder="Email subject will appear here...">
 
-        <label><strong>Body:</strong></label>
+        <label class="modal-label">Body</label>
         <textarea id="emailBody" rows="10"></textarea>
 
-        <div id="sendStatus" style="display:none; margin-top:10px; padding:10px; border-radius:8px;"></div>
+        <div id="sendStatus"></div>
 
         <div class="modal-actions">
             <div style="display:flex; gap:10px;">
-                <button class="btn-send" id="sendBtn" onclick="sendEmail()">
-                    📧 Send Email
-                </button>
+                <button class="btn-send" id="sendBtn" onclick="sendEmail()">📧 Send Email</button>
                 <button class="btn-copy" onclick="copyEmail()">📋 Copy</button>
             </div>
-            <button class="btn-close" onclick="closeModal()">Close</button>
+            <button class="btn-close" onclick="closeModal()">✕ Close</button>
         </div>
     </div>
 </div>
@@ -278,11 +355,9 @@ let currentCompanyEmail = "";
 let currentCompanyName = "";
 
 async function generateEmail(projectTitle, projectDesc, companyName, companyDesc, companyEmail){
-
     currentCompanyEmail = companyEmail || "";
     currentCompanyName = companyName || "";
 
-    // Check if email exists first
     if(!currentCompanyEmail || currentCompanyEmail.trim() === "" || currentCompanyEmail === "None"){
         alert("Email is not present for this particular company.");
         return;
@@ -292,15 +367,12 @@ async function generateEmail(projectTitle, projectDesc, companyName, companyDesc
     const loading = document.getElementById("loadingText");
     const sendBtn = document.getElementById("sendBtn");
     const recipientInfo = document.getElementById("recipientInfo");
-    const recipientNameDiv = document.getElementById("recipientName");
-    const recipientEmailDiv = document.getElementById("recipientEmail");
     const sendStatus = document.getElementById("sendStatus");
 
     modal.style.display="flex";
     loading.style.display="block";
     recipientInfo.style.display="none";
     sendStatus.style.display="none";
-
     document.getElementById("emailSubject").value="";
     document.getElementById("emailBody").value="";
 
@@ -315,27 +387,17 @@ async function generateEmail(projectTitle, projectDesc, companyName, companyDesc
                 company_description:companyDesc
             })
         });
-
         if(!res.ok) throw new Error("Server error");
-
         const data = await res.json();
-
         loading.style.display="none";
-
-        // Display AI-generated content
         document.getElementById("emailSubject").value=data.subject || "";
         document.getElementById("emailBody").value=data.body || "";
-
-        // Show recipient info
-        recipientNameDiv.textContent = currentCompanyName;
-        recipientEmailDiv.textContent = currentCompanyEmail;
+        document.getElementById("recipientName").textContent = currentCompanyName;
+        document.getElementById("recipientEmail").textContent = currentCompanyEmail;
         recipientInfo.style.display="block";
-        
-        // Enable send button since email is valid
         sendBtn.disabled = false;
-
     } catch(err){
-        loading.innerText="Error generating email.";
+        loading.innerText="❌ Error generating email.";
         console.error(err);
     }
 }
@@ -350,13 +412,8 @@ async function sendEmail(){
         alert("Email is not present for this particular company.");
         return;
     }
+    if(!subject || !body){ alert("Please generate a newsletter first."); return; }
 
-    if(!subject || !body){
-        alert("Please generate a newsletter first.");
-        return;
-    }
-
-    // Disable send button and show loading
     sendBtn.disabled = true;
     sendBtn.textContent = "Sending...";
     sendStatus.style.display = "none";
@@ -365,39 +422,28 @@ async function sendEmail(){
         const res = await fetch("/send_newsletter", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                recipient_email: currentCompanyEmail,
-                subject: subject,
-                body: body,
-                company_name: currentCompanyName
-            })
+            body: JSON.stringify({ recipient_email: currentCompanyEmail, subject, body, company_name: currentCompanyName })
         });
-
         const data = await res.json();
-
+        sendStatus.style.display = "block";
         if(data.success){
-            sendStatus.style.display = "block";
-            sendStatus.style.background = "rgba(34,197,94,0.1)";
-            sendStatus.style.color = "#22c55e";
-            sendStatus.style.border = "1px solid rgba(34,197,94,0.3)";
+            sendStatus.style.background = "rgba(34,211,165,0.1)";
+            sendStatus.style.color = "#22d3a5";
+            sendStatus.style.border = "1px solid rgba(34,211,165,0.25)";
             sendStatus.textContent = "✅ " + data.message;
         } else {
-            sendStatus.style.display = "block";
-            sendStatus.style.background = "rgba(239,68,68,0.1)";
-            sendStatus.style.color = "#ef4444";
-            sendStatus.style.border = "1px solid rgba(239,68,68,0.3)";
+            sendStatus.style.background = "rgba(255,92,124,0.1)";
+            sendStatus.style.color = "#ff5c7c";
+            sendStatus.style.border = "1px solid rgba(255,92,124,0.25)";
             sendStatus.textContent = "❌ " + data.message;
         }
-
     } catch(err){
         sendStatus.style.display = "block";
-        sendStatus.style.background = "rgba(239,68,68,0.1)";
-        sendStatus.style.color = "#ef4444";
-        sendStatus.style.border = "1px solid rgba(239,68,68,0.3)";
-        sendStatus.textContent = "❌ Error sending email: " + err.message;
-        console.error(err);
+        sendStatus.style.background = "rgba(255,92,124,0.1)";
+        sendStatus.style.color = "#ff5c7c";
+        sendStatus.style.border = "1px solid rgba(255,92,124,0.25)";
+        sendStatus.textContent = "❌ Error: " + err.message;
     } finally {
-        // Re-enable send button
         sendBtn.disabled = false;
         sendBtn.textContent = "📧 Send Email";
     }
@@ -412,13 +458,11 @@ function copyEmail(){
     const subject=document.getElementById("emailSubject").value;
     const body=document.getElementById("emailBody").value;
     navigator.clipboard.writeText("Subject: "+subject+"\n\n"+body);
-    
-    // Show brief confirmation
     const sendStatus = document.getElementById("sendStatus");
     sendStatus.style.display = "block";
-    sendStatus.style.background = "rgba(34,197,94,0.1)";
-    sendStatus.style.color = "#22c55e";
-    sendStatus.style.border = "1px solid rgba(34,197,94,0.3)";
+    sendStatus.style.background = "rgba(34,211,165,0.1)";
+    sendStatus.style.color = "#22d3a5";
+    sendStatus.style.border = "1px solid rgba(34,211,165,0.25)";
     sendStatus.textContent = "📋 Copied to clipboard!";
     setTimeout(() => { sendStatus.style.display = "none"; }, 2000);
 }
@@ -426,10 +470,7 @@ function copyEmail(){
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const savedTheme = localStorage.getItem("theme");
-
-    if (savedTheme === "light") {
-        document.body.classList.add("light");
-    }
+    if (savedTheme === "light") { document.body.classList.add("light"); }
 });
 </script>
 {% endblock %}

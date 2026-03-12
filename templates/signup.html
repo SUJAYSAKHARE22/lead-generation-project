@@ -1,362 +1,462 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <title>LeadPilotGen6 Signup</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Inter',sans-serif;
-}
+*{ margin:0; padding:0; box-sizing:border-box; font-family:'DM Sans',sans-serif; }
 
 body{
-height:100vh;
-display:flex;
-justify-content:center;
-align-items:center;
-background:linear-gradient(135deg,#0f172a,#1e293b);
-color:white;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#060c1a;
+    color:white;
+    position:relative;
+    overflow:hidden;
 }
 
-/* CARD */
+body::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    background:
+        radial-gradient(ellipse 70% 60% at 10% 0%, rgba(92,111,255,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 45% at 90% 100%, rgba(34,211,165,0.12) 0%, transparent 50%),
+        radial-gradient(ellipse 40% 30% at 50% 50%, rgba(255,92,124,0.06) 0%, transparent 50%);
+    pointer-events:none;
+}
+
+/* Step progress pills */
+.progress-track{
+    display:flex;
+    gap:8px;
+    justify-content:center;
+    margin-bottom:32px;
+}
+
+.progress-dot{
+    height:4px;
+    border-radius:2px;
+    background:rgba(255,255,255,0.15);
+    transition:all 0.4s;
+    flex:1;
+    max-width:60px;
+}
+
+.progress-dot.active{
+    background:linear-gradient(90deg,#5c6fff,#22d3a5);
+}
 
 .card{
-
-background:rgba(255,255,255,0.05);
-padding:50px 40px;
-border-radius:25px;
-width:420px;
-
-backdrop-filter:blur(20px);
-
-box-shadow:
-0 25px 60px rgba(0,0,0,0.6),
-inset 0 1px 0 rgba(255,255,255,0.08);
-
-border:1px solid rgba(255,255,255,0.08);
-
-text-align:center;
-
+    background:rgba(255,255,255,0.04);
+    backdrop-filter:blur(32px);
+    -webkit-backdrop-filter:blur(32px);
+    border:1px solid rgba(255,255,255,0.1);
+    padding:44px 40px;
+    border-radius:28px;
+    width:460px;
+    color:white;
+    box-shadow:
+        0 30px 60px rgba(0,0,0,0.5),
+        0 1px 0 rgba(255,255,255,0.1) inset;
+    position:relative;
+    z-index:1;
+    animation:cardIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
 }
 
-/* HEADER */
+@keyframes cardIn{
+    from{ opacity:0; transform:translateY(40px) scale(0.95); }
+    to{ opacity:1; transform:translateY(0) scale(1); }
+}
 
 .brand{
-letter-spacing:4px;
-font-size:13px;
-color:#8b93ff;
-margin-bottom:10px;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-size:11px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:#7c8fff;
+    font-weight:700;
+    margin-bottom:8px;
 }
 
-.title{
-font-size:34px;
-font-weight:700;
-margin-bottom:8px;
+.card-title{
+    font-family:'Syne',sans-serif;
+    font-size:30px;
+    font-weight:800;
+    margin-bottom:4px;
+    background:linear-gradient(135deg,#fff 40%,#7c8fff);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
 }
 
-.subtitle{
-color:#94a3b8;
-margin-bottom:30px;
-font-size:15px;
+.card-sub{
+    color:#8899bb;
+    margin-bottom:28px;
+    font-size:14px;
 }
 
-/* STEP VIEWPORT (important) */
-
-.form-slider{
-overflow:hidden;
-width:100%;
-}
-
-/* STEP CONTAINER */
+/* Slider */
+.form-slider{ overflow:hidden; width:100%; }
 
 .steps{
-display:flex;
-width:300%;
-transition:0.6s ease;
+    display:flex;
+    width:300%;
+    transition:0.5s cubic-bezier(0.4,0,0.2,1);
 }
-
-/* EACH STEP */
 
 .step{
-width:33.333%;
-flex-shrink:0;
-padding:5px;
+    width:33.333%;
+    flex-shrink:0;
+    padding:2px;
 }
 
-/* INPUT */
+/* Input group */
+.input-group{
+    position:relative;
+    margin-bottom:14px;
+}
+
+.input-group i{
+    position:absolute;
+    left:15px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#5c6fff;
+    font-size:13px;
+}
 
 input{
-
-width:100%;
-padding:15px;
-margin-bottom:18px;
-
-border-radius:14px;
-border:1px solid rgba(255,255,255,0.1);
-
-background:rgba(255,255,255,0.06);
-color:white;
-
-font-size:14px;
-
-outline:none;
-transition:0.3s;
-
+    width:100%;
+    padding:13px 16px 13px 42px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.1);
+    background:rgba(255,255,255,0.05);
+    color:white;
+    font-size:14px;
+    outline:none;
+    transition:all 0.25s;
+    font-family:'DM Sans',sans-serif;
 }
+
+input::placeholder{ color:#4a5a7a; }
 
 input:focus{
-
-border-color:#6366f1;
-box-shadow:0 0 0 2px rgba(99,102,241,0.3);
-
+    border-color:rgba(92,111,255,0.5);
+    background:rgba(92,111,255,0.08);
+    box-shadow:0 0 0 3px rgba(92,111,255,0.15);
 }
 
-/* BUTTON */
-
-button{
-
-width:100%;
-padding:16px;
-
-border:none;
-border-radius:14px;
-
-background:linear-gradient(135deg,#6366f1,#7c7fff);
-
-color:white;
-font-size:16px;
-font-weight:600;
-
-cursor:pointer;
-
-box-shadow:0 10px 30px rgba(99,102,241,0.5);
-
-transition:0.3s;
-
-margin-top:10px;
-
+.btn-row{
+    display:flex;
+    gap:10px;
+    margin-top:16px;
 }
 
-button:hover{
-
-transform:translateY(-2px);
-box-shadow:0 15px 40px rgba(99,102,241,0.6);
-
+.btn-back{
+    flex:1;
+    padding:13px;
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:12px;
+    background:rgba(255,255,255,0.05);
+    color:#8899bb;
+    font-size:14px;
+    cursor:pointer;
+    transition:all 0.2s;
+    font-family:'DM Sans',sans-serif;
 }
 
-/* WELCOME TEXT */
-
-.welcome{
-font-size:16px;
-line-height:1.6;
-color:#cbd5f5;
-margin-bottom:25px;
+.btn-back:hover{
+    background:rgba(255,255,255,0.08);
+    color:white;
 }
 
-/* LOGIN LINK */
-
-.login-link{
-
-margin-top:20px;
-color:#94a3b8;
-
+.btn-next{
+    flex:2;
+    padding:13px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(135deg,#5c6fff,#7c8fff);
+    color:white;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    transition:all 0.25s;
+    box-shadow:0 6px 20px rgba(92,111,255,0.35);
+    font-family:'Syne',sans-serif;
 }
 
-.login-link a{
+.btn-next:hover{
+    transform:translateY(-1px);
+    box-shadow:0 10px 28px rgba(92,111,255,0.5);
+}
 
-color:#8b93ff;
-text-decoration:none;
-font-weight:600;
+.btn-submit{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:14px;
+    background:linear-gradient(135deg,#5c6fff,#22d3a5);
+    color:white;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    transition:all 0.25s;
+    box-shadow:0 8px 25px rgba(92,111,255,0.35);
+    margin-top:10px;
+    font-family:'Syne',sans-serif;
+}
 
+.btn-submit:hover{
+    transform:translateY(-2px);
+    box-shadow:0 12px 35px rgba(92,111,255,0.5);
+}
+
+/* Welcome step */
+.welcome-card{
+    background:rgba(92,111,255,0.06);
+    border:1px solid rgba(92,111,255,0.15);
+    border-radius:16px;
+    padding:20px;
+    margin-bottom:20px;
+}
+
+.welcome-card h3{
+    font-family:'Syne',sans-serif;
+    font-size:18px;
+    margin-bottom:14px;
+    color:#a5b4fc;
+}
+
+.feature-item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:9px 0;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    font-size:14px;
+    color:#c8d4f0;
+}
+
+.feature-item:last-child{ border-bottom:none; }
+
+.feature-icon{
+    width:30px;
+    height:30px;
+    border-radius:8px;
+    background:rgba(92,111,255,0.15);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:14px;
+    flex-shrink:0;
 }
 
 .error{
-color:#ff6b6b;
-font-size:13px;
-text-align:left;
-margin-top:-10px;
-margin-bottom:10px;
-display:none;
+    color:#ff5c7c;
+    font-size:13px;
+    margin-top:-10px;
+    margin-bottom:12px;
+    display:none;
+    padding:8px 12px;
+    background:rgba(255,92,124,0.1);
+    border-radius:8px;
+    border:1px solid rgba(255,92,124,0.2);
+}
+
+.login-link{
+    margin-top:20px;
+    font-size:13px;
+    color:#8899bb;
+    text-align:center;
+}
+
+.login-link a{
+    color:#7c8fff;
+    text-decoration:none;
+    font-weight:600;
+}
+
+.login-link a:hover{ color:#a5b4fc; }
+
+.step-label{
+    font-size:12px;
+    color:#8899bb;
+    text-align:center;
+    margin-bottom:20px;
+    font-weight:500;
 }
 </style>
-
 </head>
-
 <body>
 
 <div class="card">
+    <div class="brand"><i class="fas fa-rocket"></i> TARS TECHNOLOGIES</div>
+    <div class="card-title">Create Account</div>
+    <div class="card-sub">Join LeadPilotGen6 Platform</div>
 
-<div class="brand">TARS TECHNOLOGIES</div>
+    <div class="progress-track">
+        <div class="progress-dot active" id="dot0"></div>
+        <div class="progress-dot" id="dot1"></div>
+        <div class="progress-dot" id="dot2"></div>
+    </div>
 
-<div class="title">Create Account</div>
+    <div class="step-label" id="stepLabel">Step 1 of 3 — Personal Info</div>
 
-<div class="subtitle">Join LeadPilotGen6 Platform</div>
+    <form method="POST">
+    <div class="form-slider">
+    <div class="steps" id="steps">
 
-<form method="POST">
+        <!-- STEP 1 — Personal -->
+        <div class="step">
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" name="name" placeholder="Full Name" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-phone"></i>
+                <input type="tel" name="phone" placeholder="Phone Number" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-envelope"></i>
+                <input type="email" name="email" placeholder="Personal Email" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" name="password" placeholder="Password" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-shield-alt"></i>
+                <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+            </div>
+            <div id="password_error" class="error"></div>
+            <div class="btn-row">
+                <button type="button" class="btn-back" onclick="prevStep()">← Back</button>
+                <button type="button" class="btn-next" onclick="nextStep()">Next →</button>
+            </div>
+        </div>
 
-<div class="form-slider">
+        <!-- STEP 2 — Company -->
+        <div class="step">
+            <div class="input-group">
+                <i class="fas fa-building"></i>
+                <input type="text" name="company_name" placeholder="Company Name" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-users"></i>
+                <input type="text" name="employees" placeholder="Number of Employees" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-map-marker-alt"></i>
+                <input type="text" name="location" placeholder="Company Location" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-envelope-open"></i>
+                <input type="email" name="company_email" placeholder="Company Email" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-phone-office"></i>
+                <input type="tel" name="company_phone" placeholder="Company Phone" required>
+            </div>
+            <div class="btn-row">
+                <button type="button" class="btn-back" onclick="prevStep()">← Back</button>
+                <button type="button" class="btn-next" onclick="nextStep()">Next →</button>
+            </div>
+        </div>
 
-<div class="steps" id="steps">
+        <!-- STEP 3 — Welcome -->
+        <div class="step">
+            <div class="welcome-card">
+                <h3>🚀 You're all set!</h3>
+                <div class="feature-item">
+                    <div class="feature-icon">🔍</div>
+                    Discover companies automatically
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🤖</div>
+                    Generate AI outreach messages
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📁</div>
+                    Manage multiple sales projects
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📈</div>
+                    Grow your startup faster
+                </div>
+            </div>
+            <div class="btn-row">
+                <button type="button" class="btn-back" onclick="prevStep()">← Back</button>
+            </div>
+            <button type="submit" class="btn-submit">
+                <i class="fas fa-rocket" style="margin-right:8px;"></i>
+                Start Using LeadPilotGen6
+            </button>
+        </div>
 
-<!-- STEP 1 -->
+    </div>
+    </div>
+    </form>
 
-<div class="step">
-
-<input type="text" name="name" placeholder="Full Name" required>
-
-<input type="tel" name="phone" placeholder="Phone Number" required>
-
-<input type="email" name="email" placeholder="Personal Email" required>
-
-<input type="password" name="password" placeholder="Password" required>
-
-<input type="password" name="confirm_password" placeholder="Confirm Password" required>
-
-<div id="password_error" class="error"></div>
-<button type="button" onclick="prevStep()">Back</button>
-<button type="button" onclick="nextStep()">Next</button>
-
+    <div class="login-link">
+        Already have an account? <a href="/">Login →</a>
+    </div>
 </div>
 
-<!-- STEP 2 -->
-
-<div class="step">
-
-<input type="text" name="company_name" placeholder="Company Name" required>
-
-<input type="text" name="employees" placeholder="Number of Employees" required>
-
-<input type="text" name="location" placeholder="Company Location" required>
-
-<input type="email" name="company_email" placeholder="Company Email" required>
-
-<input type="tel" name="company_phone" placeholder="Company Phone" required>
-<button type="button" onclick="prevStep()">Back</button>
-<button type="button" onclick="nextStep()">Next</button>
-
-</div>
-
-<!-- STEP 3 -->
-
-<div class="step">
-
-<div class="welcome">
-
-Welcome to <b>LeadPilotGen6 🚀</b><br><br>
-
-Your AI-powered lead generation platform is ready.
-
-<br><br>
-
-• Discover companies automatically<br>
-• Generate AI outreach messages<br>
-• Manage multiple sales projects<br>
-• Grow your startup faster
-
-<br><br>
-
-Let's start building your first pipeline.
-
-</div>
-<button type="button" onclick="prevStep()">Back</button>
-<button type="submit">Start Using LeadPilotGen6</button>
-
-</div>
-
-</div>
-
-</div>
-
-</form>
-
-<div class="login-link">
-Already have an account?
-<a href="/">Login</a>
-</div>
-
-</div>
 <script>
-   let step = 0;
+let step = 0;
+const labels = ["Step 1 of 3 — Personal Info", "Step 2 of 3 — Company Info", "Step 3 of 3 — Ready to Go!"];
+
+function updateProgress(){
+    for(let i=0;i<3;i++){
+        document.getElementById("dot"+i).classList.toggle("active", i<=step);
+    }
+    document.getElementById("stepLabel").textContent = labels[step];
+}
 
 function nextStep(){
-
-let steps = document.querySelectorAll(".step");
-let inputs = steps[step].querySelectorAll("input");
-let error = document.getElementById("password_error");
-
-/* reset error */
-
-if(error){
-error.style.display="none";
-error.innerText="";
-}
-
-/* check empty fields */
-
-for(let i=0;i<inputs.length;i++){
-
-if(inputs[i].value.trim()===""){
-
-inputs[i].focus();
-inputs[i].style.border="1px solid red";
-return;
-
-}
-
-}
-
-/* password check */
-
-if(step === 0){
-
-let password=document.querySelector("input[name='password']").value;
-let confirm=document.querySelector("input[name='confirm_password']").value;
-
-if(password!==confirm){
-
-error.innerText="⚠ Passwords do not match";
-error.style.display="block";
-return;
-
-}
-
-}
-
-/* move step */
-
-if(step < steps.length-1){
-
-step++;
-
-document.getElementById("steps").style.transform =
-"translateX(-"+(step*33.333)+"%)";
-
-}
-
+    let steps = document.querySelectorAll(".step");
+    let inputs = steps[step].querySelectorAll("input");
+    let error = document.getElementById("password_error");
+    if(error){ error.style.display="none"; error.innerText=""; }
+    for(let i=0;i<inputs.length;i++){
+        if(inputs[i].value.trim()===""){
+            inputs[i].focus();
+            inputs[i].style.borderColor="rgba(255,92,124,0.6)";
+            setTimeout(()=>inputs[i].style.borderColor="",1500);
+            return;
+        }
+    }
+    if(step===0){
+        let pw=document.querySelector("input[name='password']").value;
+        let cpw=document.querySelector("input[name='confirm_password']").value;
+        if(pw!==cpw){
+            error.innerText="⚠ Passwords do not match";
+            error.style.display="block";
+            return;
+        }
+    }
+    if(step<steps.length-1){
+        step++;
+        document.getElementById("steps").style.transform="translateX(-"+(step*33.333)+"%)";
+        updateProgress();
+    }
 }
 
 function prevStep(){
-
-let steps = document.querySelectorAll(".step");
-
-if(step > 0){
-
-step--;
-
-document.getElementById("steps").style.transform =
-"translateX(-"+(step*33.333)+"%)";
-
-}
-
+    if(step>0){
+        step--;
+        document.getElementById("steps").style.transform="translateX(-"+(step*33.333)+"%)";
+        updateProgress();
+    }
 }
 </script>
-
 </body>
 </html>
