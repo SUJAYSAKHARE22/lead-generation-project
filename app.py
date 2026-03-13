@@ -116,7 +116,7 @@ def init_db():
     # Safely add new columns if not exist
     for col in [
         "description", "email", "ceo",
-        "company_linkedin", "leadership_linkedin", "status", "reason"
+        "company_linkedin", "leadership_linkedin", "status", "reason", "cta_at", "declined_at"
     ]:
         try:
             cur.execute(f"ALTER TABLE companies ADD COLUMN {col} TEXT")
@@ -1413,6 +1413,7 @@ def overview_project(chat_id):
 
     conn = get_db_connection()
 
+    # In overview_project(), change the companies query:
     companies = conn.execute("""
     SELECT c.id, c.name, c.website, c.phone, c.address, c.rating,
            c.description, c.email, c.ceo,
@@ -1420,6 +1421,11 @@ def overview_project(chat_id):
     FROM companies c
     JOIN chats ch ON c.chat_id = ch.id
     WHERE c.chat_id = ? AND ch.user = ?
+    ORDER BY 
+        CASE WHEN c.status='cta' THEN 0 WHEN c.status='declined' THEN 1 ELSE 2 END ASC,
+        CASE WHEN c.status='cta' THEN c.cta_at END DESC NULLS LAST,
+        CASE WHEN c.status='declined' THEN c.declined_at END DESC NULLS LAST,
+        c.id ASC
 """, (chat_id, current_user.username)).fetchall()
 
     conn.close()
@@ -1429,9 +1435,9 @@ def overview_project(chat_id):
     suggested = []
     if stored:
         try:
-            suggested = json.loads(stored)
+            suggested = json.loads(stored) 
         except:
-            suggested = []
+            suggested = [] 
 
     return render_template(
         "overview_project.html",
@@ -1450,7 +1456,18 @@ def update_status():
     reason = request.form.get("reason", "")
 
     conn = get_db_connection()
-    conn.execute(
+    if status == "cta":
+     conn.execute(
+        "UPDATE companies SET status=?, reason=?, cta_at=CURRENT_TIMESTAMP WHERE id=?",
+        (status, reason, company_id)
+    )
+    elif status == "declined":
+     conn.execute(
+        "UPDATE companies SET status=?, reason=?, declined_at=CURRENT_TIMESTAMP WHERE id=?",
+        (status, reason, company_id)
+    )
+    else:
+     conn.execute(
         "UPDATE companies SET status=?, reason=? WHERE id=?",
         (status, reason, company_id)
     )
