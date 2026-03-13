@@ -465,6 +465,13 @@ function sendStatus(status){
         body: `company_id=${currentCompanyId}&status=${status}&reason=${encodeURIComponent(declineReason)}`
     }).then(()=>{
         if(status === 'cta'){
+            // Find the card and move it to the FRONT of the grid
+            const grid = document.querySelector(".grid");
+            const card = document.querySelector(`.company-card[onclick*="'${currentCompanyId}'"]`);
+            if(card && grid){
+                card.dataset.status = "cta";
+                grid.insertBefore(card, grid.firstChild);  // ← prepend to front
+            }
             showToast("✅ Added to Call For Action!");
             setTimeout(()=>{ location.reload(); }, 1500);
         } else {
